@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboard Keuangan Perum Kampoeng Dara</title>
+<!-- MOBILE UPLOAD FIX4: persist selected file safely in IndexedDB before navigation back from Android file picker -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6f4;color:#182019}
@@ -42,10 +43,77 @@ const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let data=[],admin=false,editId=null,currentUser=null;
 let pendingUploadFile=null;
 const DRAFT_DB='kampoengDaraUploadDraft';
-function openDraftDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DRAFT_DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
-async function saveDraft(file){try{const dbx=await openDraftDB(),tx=dbx.transaction('draft','readwrite');tx.objectStore('draft').put({tanggal:document.getElementById('fdate')?.value||'',jenis:document.getElementById('ftype')?.value||'in',nominal:document.getElementById('famount')?.value||'',deskripsi:document.getElementById('fdesc')?.value||'',name:file?.name||'',type:file?.type||'',size:file?.size||0,file:file||null},'current');return true}catch(e){console.warn('Draft upload tidak tersimpan:',e);return false}}
-async function getDraft(){try{const dbx=await openDraftDB();return await new Promise((resolve,reject)=>{const r=dbx.transaction('draft','readonly').objectStore('draft').get('current');r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error)})}catch(e){return null}}
-async function clearDraft(){try{const dbx=await openDraftDB();dbx.transaction('draft','readwrite').objectStore('draft').delete('current')}catch(e){}}
+
+function openDraftDB(){
+  return new Promise((resolve,reject)=>{
+    const r=indexedDB.open(DRAFT_DB,1);
+    r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('draft'))r.result.createObjectStore('draft')};
+    r.onsuccess=()=>resolve(r.result);
+    r.onerror=()=>reject(r.error);
+  });
+}
+
+async function saveDraft(file){
+  try{
+    const f=file||pendingUploadFile||null;
+    let fileData=null;
+    if(f) fileData=await f.arrayBuffer();
+
+    const record={
+      tanggal:document.getElementById('fdate')?.value||'',
+      jenis:document.getElementById('ftype')?.value||'in',
+      nominal:document.getElementById('famount')?.value||'',
+      deskripsi:document.getElementById('fdesc')?.value||'',
+      name:f?.name||'',
+      type:f?.type||'',
+      size:f?.size||0,
+      fileData
+    };
+
+    const dbx=await openDraftDB();
+    await new Promise((resolve,reject)=>{
+      const tx=dbx.transaction('draft','readwrite');
+      tx.objectStore('draft').put(record,'current');
+      tx.oncomplete=resolve;
+      tx.onerror=()=>reject(tx.error||new Error('Gagal menyimpan draft'));
+      tx.onabort=()=>reject(tx.error||new Error('Draft dibatalkan'));
+    });
+    return true;
+  }catch(e){
+    console.warn('Draft upload tidak tersimpan:',e);
+    return false;
+  }
+}
+
+async function getDraft(){
+  try{
+    const dbx=await openDraftDB();
+    const d=await new Promise((resolve,reject)=>{
+      const r=dbx.transaction('draft','readonly').objectStore('draft').get('current');
+      r.onsuccess=()=>resolve(r.result||null);
+      r.onerror=()=>reject(r.error);
+    });
+    if(d?.fileData){
+      const blob=new Blob([d.fileData],{type:d.type||'application/octet-stream'});
+      d.file=new File([blob],d.name||'bukti',{type:d.type||'application/octet-stream'});
+    }else{
+      d.file=null;
+    }
+    return d;
+  }catch(e){return null}
+}
+
+async function clearDraft(){
+  try{
+    const dbx=await openDraftDB();
+    await new Promise((resolve,reject)=>{
+      const tx=dbx.transaction('draft','readwrite');
+      tx.objectStore('draft').delete('current');
+      tx.oncomplete=resolve;
+      tx.onerror=()=>reject(tx.error);
+    });
+  }catch(e){}
+}
 
 const rupiah=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n)||0);
 const esc=s=>String(s??'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
@@ -60,7 +128,7 @@ async function init(){
 const {data:{session}}=await db.auth.getSession();currentUser=session?.user||null;admin=!!currentUser;
 db.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;admin=!!currentUser;editId=null;document.getElementById('formArea').innerHTML='';render()});
 await loadData();
-if(admin){const d=await getDraft();if(d){showForm(null,d);pendingUploadFile=d.file||null}}
+if(admin){const d=await getDraft();if(d){pendingUploadFile=d.file||null;showForm(null,d)}}
 }
 function showLogin(){
 document.getElementById('modal').innerHTML=`<div class="modal"><div class="box"><h3>Login Admin</h3><p style="font-size:13px;color:#68736a">Masukkan email dan password Admin Supabase.</p><label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="Email admin"></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password admin"></label><div id="loginError" class="error"></div><div class="actions" style="margin-top:14px"><button type="button" onclick="doLogin()">Masuk</button><button type="button" class="alt" onclick="closeModal()">Batal</button></div></div></div>`;
@@ -83,9 +151,17 @@ const draftName=draft?.name||pendingUploadFile?.name||'';
 document.getElementById('formArea').innerHTML=`<div class="form"><b>${id==null?'Tambah':'Edit'} Transaksi</b><div class="grid"><label>Tanggal<input id="fdate" type="date" value="${esc(x.tanggal)}" onchange="saveCurrentDraft()"></label><label>Jenis<select id="ftype" onchange="saveCurrentDraft()"><option value="in" ${x.jenis==='in'?'selected':''}>Uang Masuk</option><option value="out" ${x.jenis==='out'?'selected':''}>Uang Keluar</option></select></label><label>Nominal<input id="famount" type="number" min="1" step="1" value="${esc(x.nominal)}" oninput="saveCurrentDraft()"></label><label>Deskripsi<input id="fdesc" value="${esc(x.deskripsi)}" oninput="saveCurrentDraft()"></label><label class="full">Upload bukti transaksi (opsional)<div class="uploadbox"><input id="fproof" type="file" accept="image/*,.pdf,application/pdf" aria-label="Pilih bukti transaksi dari HP atau komputer" onchange="showSelectedFile(this)"><div id="fileSelected" class="filehint">${draftName?`File dipilih: ${esc(draftName)}`:'Belum ada file dipilih.'}</div><div class="filehint">Format: foto JPG, PNG, WEBP atau PDF. Maksimal 10 MB. Foto HP besar akan diperkecil otomatis.</div>${x.bukti_url?`<div class="prooffile">Bukti saat ini: <a href="${esc(x.bukti_url)}" target="_blank" rel="noopener">${esc(x.bukti_nama||'Lihat bukti')}</a></div>`:''}</div></label></div><div class="actions" style="margin-top:12px"><button type="button" onclick="submitForm()">Simpan</button><button type="button" class="alt" onclick="cancelForm()">Batal</button></div></div>`;
 }
 async function showSelectedFile(input){
-const f=input?.files?.[0]||null;pendingUploadFile=f;const out=document.getElementById('fileSelected');if(out)out.textContent=f?`File dipilih: ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`:'Belum ada file dipilih.';if(f)await saveDraft(f);else await saveCurrentDraft();
+  const f=input?.files?.[0]||null;
+  pendingUploadFile=f;
+  const out=document.getElementById('fileSelected');
+  if(out)out.textContent=f?`File dipilih: ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`:'Belum ada file dipilih.';
+  if(f) await saveDraft(f);
 }
-async function saveCurrentDraft(){const f=document.getElementById('fproof')?.files?.[0]||pendingUploadFile||null;await saveDraft(f)}
+
+async function saveCurrentDraft(){
+  const f=document.getElementById('fproof')?.files?.[0]||pendingUploadFile||null;
+  await saveDraft(f);
+}
 
 const STORAGE_BUCKET='bukti-transaksi';
 function storagePathFromUrl(url){
@@ -149,7 +225,7 @@ async function uploadProof(file){
   if(!currentUser?.id) throw new Error('Sesi Admin tidak ditemukan. Silakan login kembali.');
   const path=`${currentUser.id}/${Date.now()}_${makeFileId()}_${uploadName}`;
   const {error}=await db.storage.from(STORAGE_BUCKET).upload(path,uploadFile,{upsert:false,contentType:uploadType});
-  if(error)throw error;
+  if(error)throw new Error('Upload ke Supabase Storage gagal: '+error.message);
   const {data}=db.storage.from(STORAGE_BUCKET).getPublicUrl(path);
   return {url:data.publicUrl,name:file.name,path};
 }
@@ -166,9 +242,9 @@ try{
 let bukti_url=null,bukti_nama=null,bukti_path=null;
 const existing=editId==null?null:data.find(a=>String(a.id)===String(editId));
 if(existing){bukti_url=existing.bukti_url||null;bukti_nama=existing.bukti_nama||null;bukti_path=existing.bukti_path||storagePathFromUrl(existing.bukti_url)}
-if(file){const uploaded=await uploadProof(file);bukti_url=uploaded.url;bukti_nama=uploaded.name;bukti_path=uploaded.path}
+if(file){setStatus('Mengunggah bukti...');const uploaded=await uploadProof(file);bukti_url=uploaded.url;bukti_nama=uploaded.name;bukti_path=uploaded.path}
 const item={tanggal,jenis,deskripsi,nominal,bukti_url,bukti_nama,bukti_path};
-const result=editId==null?await db.from('transaksi').insert(item).select().single():await db.from('transaksi').update(item).eq('id',editId).select().single();
+setStatus('Menyimpan transaksi...');const result=editId==null?await db.from('transaksi').insert(item).select().single():await db.from('transaksi').update(item).eq('id',editId).select().single();
 if(result.error){if(file&&bukti_path)await deleteProof(bukti_path);throw result.error}
 if(file&&existing){const oldPath=existing.bukti_path||storagePathFromUrl(existing.bukti_url);if(oldPath&&oldPath!==bukti_path)await deleteProof(oldPath)}
 editId=null;pendingUploadFile=null;await clearDraft();document.getElementById('formArea').innerHTML='';await loadData();
