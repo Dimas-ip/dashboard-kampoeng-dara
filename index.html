@@ -5,138 +5,753 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboard Keuangan Perum Kampoeng Dara</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6f4;color:#182019}
-header{background:#182019;color:#fff;padding:28px 18px 70px}header h1{margin:8px 0;font-size:28px}header p{margin:0;color:#cbd3cc}.wrap{max-width:1100px;margin:auto;padding:0 16px 40px}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:-42px}.card{background:white;border-radius:14px;padding:20px;box-shadow:0 4px 16px #0001}.card span{color:#68736a;font-size:13px}.card strong{display:block;font-size:25px;margin-top:8px}.in{color:#23753d}.out{color:#b43d32}.balance{background:#28583b;color:white}.balance span{color:#d7e4da}
-.panel{background:#fff;margin-top:18px;padding:20px;border-radius:14px;box-shadow:0 4px 16px #0001}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-button{border:0;border-radius:9px;padding:11px 15px;background:#28583b;color:#fff;font-weight:600;cursor:pointer}button.alt{background:#eef1ee;color:#182019}button.red{background:#b43d32}
-input,select{width:100%;padding:11px;border:1px solid #ccd3cd;border-radius:8px;margin-top:6px;background:#fff}label{font-size:13px;color:#4e594f}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}.full{grid-column:1/-1}
-.form{background:#f6f8f6;padding:15px;border-radius:10px;margin:15px 0}.actions{display:flex;gap:7px;flex-wrap:wrap}.table{overflow:auto;margin-top:14px}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;padding:12px 9px;border-bottom:1px solid #e3e7e3;font-size:14px}th{font-size:11px;color:#69736b;text-transform:uppercase}.badge{padding:5px 8px;border-radius:99px;font-size:11px;font-weight:bold}.bin{background:#e0f1e4;color:#28623b}.bout{background:#f4dfdc;color:#a33b31}.empty{text-align:center;padding:25px;color:#7a837c}.note{margin-top:15px;padding:13px;background:#eef3ee;border-radius:10px;color:#5d675f;font-size:13px}
-.filehint{font-size:12px;color:#68736a;margin-top:6px}.prooffile{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:20px}.box{background:white;border-radius:14px;padding:22px;width:min(420px,100%)}.box h3{margin-top:0}
-@media(max-width:700px){.cards{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.full{grid-column:auto}header h1{font-size:23px}}
-@media print{button,.form,.search,.note{display:none!important}header{padding-bottom:25px}.cards{margin-top:15px}.panel{box-shadow:none}}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f4;color:#182019}
+header{background:#182019;color:#fff;padding:28px 18px 70px}
+header h1{margin:8px 0;font-size:28px}
+header p{margin:0;color:#cbd3cc}
+.wrap{max-width:1100px;margin:auto;padding:0 16px 40px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:-42px}
+.card{background:white;border-radius:14px;padding:20px;box-shadow:0 4px 16px #0001}
+.card span{color:#68736a;font-size:13px}
+.card strong{display:block;font-size:25px;margin-top:8px}
+.in{color:#23753d}.out{color:#b43d32}
+.balance{background:#28583b;color:white}
+.balance span{color:#d7e4da}
+.panel{background:#fff;margin-top:18px;padding:20px;border-radius:14px;box-shadow:0 4px 16px #0001}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+
+button .admin-icon{
+width:17px;
+height:17px;
+fill:none;
+stroke:currentColor;
+stroke-width:2;
+stroke-linecap:round;
+stroke-linejoin:round;
+vertical-align:-3px;
+margin-right:7px;
+pointer-events:none
+}
+
+button{
+border:0;
+border-radius:9px;
+padding:11px 15px;
+background:#28583b;
+color:#fff;
+font-weight:600;
+cursor:pointer
+}
+
+button.alt{background:#eef1ee;color:#182019}
+button.red{background:#b43d32}
+
+input,select{
+width:100%;
+padding:11px;
+border:1px solid #ccd3cd;
+border-radius:8px;
+margin-top:6px;
+background:#fff
+}
+
+label{font-size:13px;color:#4e594f}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}
+.full{grid-column:1/-1}
+.form{background:#f6f8f6;padding:15px;border-radius:10px;margin:15px 0}
+.actions{display:flex;gap:7px;flex-wrap:wrap}
+.table{overflow:auto;margin-top:14px}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th,td{text-align:left;padding:12px 9px;border-bottom:1px solid #e3e7e3;font-size:14px}
+th{font-size:11px;color:#69736b;text-transform:uppercase}
+.badge{padding:5px 8px;border-radius:99px;font-size:11px;font-weight:bold}
+.bin{background:#e0f1e4;color:#28623b}
+.bout{background:#f4dfdc;color:#a33b31}
+.empty{text-align:center;padding:25px;color:#7a837c}
+.note{margin-top:15px;padding:13px;background:#eef3ee;border-radius:10px;color:#5d675f;font-size:13px}
+.filehint{font-size:12px;color:#68736a;margin-top:6px}
+.prooffile{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{background:white;border-radius:14px;padding:22px;width:min(420px,100%)}
+.box h3{margin-top:0}
+
+@media(max-width:700px){
+.cards{grid-template-columns:1fr}
+.grid{grid-template-columns:1fr}
+.full{grid-column:auto}
+header h1{font-size:23px}
+}
+
+@media print{
+button,.form,.search,.note{display:none!important}
+header{padding-bottom:25px}
+.cards{margin-top:15px}
+.panel{box-shadow:none}
+}
 </style>
 </head>
+
 <body>
-<header><div class="wrap"><small>LAPORAN KAS â€¢ OFFLINE</small><h1>Dashboard Keuangan Perum Kampoeng Dara</h1><p>Kelola uang masuk, uang keluar, sisa kas, dan bukti transaksi.</p></div></header>
+
+<header>
 <div class="wrap">
+<small>LAPORAN KAS • OFFLINE</small>
+<h1>Dashboard Keuangan Perum Kampoeng Dara</h1>
+<p>Kelola uang masuk, uang keluar, sisa kas, dan bukti transaksi.</p>
+</div>
+</header>
+
+<div class="wrap">
+
 <section class="cards">
-<div class="card"><span>Uang Masuk</span><strong class="in" id="masuk">Rp0</strong></div>
-<div class="card"><span>Uang Keluar</span><strong class="out" id="keluar">Rp0</strong></div>
-<div class="card balance"><span>Sisa Kas</span><strong id="saldo">Rp0</strong></div>
+<div class="card">
+<span>Uang Masuk</span>
+<strong class="in" id="masuk">Rp0</strong>
+</div>
+
+<div class="card">
+<span>Uang Keluar</span>
+<strong class="out" id="keluar">Rp0</strong>
+</div>
+
+<div class="card balance">
+<span>Sisa Kas</span>
+<strong id="saldo">Rp0</strong>
+</div>
 </section>
+
 <section class="panel">
-<div class="top"><div><small>BUKU KAS</small><h2 style="margin:6px 0">Transaksi</h2></div><div class="actions"><button type="button" id="adminBtn">ðŸ” Login Admin</button><button class="alt" onclick="printPDF()">Export PDF</button><button class="alt" onclick="exportCSV()">Export Excel</button></div></div>
+
+<div class="top">
+<div>
+<small>BUKU KAS</small>
+<h2 style="margin:6px 0">Transaksi</h2>
+</div>
+
+<div class="actions">
+
+<button type="button" id="adminBtn" aria-label="Login Admin">
+<svg class="admin-icon" viewBox="0 0 24 24" aria-hidden="true">
+<path d="M7 10V7a5 5 0 0 1 10 0v3"/>
+<rect x="4" y="10" width="16" height="11" rx="2"/>
+<circle cx="12" cy="15" r="1.2"/>
+<path d="M12 16.2V18"/>
+</svg>
+<span>Login Admin</span>
+</button>
+
+<button class="alt" onclick="printPDF()">Export PDF</button>
+<button class="alt" onclick="exportCSV()">Export Excel</button>
+
+</div>
+</div>
+
 <input class="search" id="search" placeholder="Cari tanggal atau deskripsi..." oninput="render()">
+
 <div id="formArea"></div>
-<div class="table"><table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Deskripsi</th><th>Nominal</th><th>Bukti</th><th id="aksiHead" style="display:none">Aksi</th></tr></thead><tbody id="rows"></tbody></table></div>
-<div class="note">ðŸ” Mode viewer hanya melihat data. Akses Admin memerlukan PIN khusus untuk menambah, mengedit, atau menghapus transaksi. PIN tidak ditampilkan di halaman dashboard.</div>
+
+<div class="table">
+<table>
+<thead>
+<tr>
+<th>Tanggal</th>
+<th>Jenis</th>
+<th>Deskripsi</th>
+<th>Nominal</th>
+<th>Bukti</th>
+<th id="aksiHead" style="display:none">Aksi</th>
+</tr>
+</thead>
+
+<tbody id="rows"></tbody>
+</table>
+</div>
+
+<div class="note">
+🔐 Mode viewer hanya melihat data. Akses Admin memerlukan PIN khusus untuk menambah, mengedit, atau menghapus transaksi. PIN tidak ditampilkan di halaman dashboard.
+</div>
+
 </section>
 </div>
+
 <div id="modal"></div>
+
 <script>
-const KEY='kampoeng_dara_html_v1', PINKEY='kampoeng_dara_pin';
-const DEFAULT_PIN='MDEwNjIwMjY='; // PIN disimpan tersamar, tidak ditampilkan di dashboard
-let data=JSON.parse(localStorage.getItem(KEY)||'[]'), admin=false, editId=null;
-const rupiah=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n);
-function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
-function decodePin(v){
- try{return decodeURIComponent(escape(atob(v)))}catch(e){return atob(v)}
-}
-function adminLogin(){
- try{
-   const p=window.prompt('Masukkan PIN Admin:');
-   if(p===null)return;
-   const saved=localStorage.getItem(PINKEY);
-   const correct=saved ? (p===saved || p===decodePin(saved)) : p===decodePin(DEFAULT_PIN);
-   if(correct){
-     admin=true;
-     render();
-     showForm();
-   }else{
-     window.alert('PIN salah. Silakan coba lagi.');
-   }
- }catch(e){
-   window.alert('Login Admin gagal dibuka. Silakan refresh halaman dan coba lagi.');
- }
-}
-function logout(){admin=false;editId=null;render()}
-function showForm(id=null){
- if(!admin)return;
- editId=id;
- const x=id==null?{date:new Date().toISOString().slice(0,10),type:'in',description:'',amount:'',proof:''}:data.find(a=>a.id===id);
- document.getElementById('formArea').innerHTML=`<div class="form"><b>${id==null?'Tambah':'Edit'} Transaksi</b>
- <div class="grid"><label>Tanggal<input id="fdate" type="date" value="${x.date}"></label>
- <label>Jenis<select id="ftype"><option value="in" ${x.type==='in'?'selected':''}>Uang Masuk</option><option value="out" ${x.type==='out'?'selected':''}>Uang Keluar</option></select></label>
- <label>Nominal<input id="famount" type="number" min="1" value="${x.amount}"></label>
- <label>Deskripsi<input id="fdesc" value="${esc(x.description)}"></label>
- <label class="full">Bukti transaksi (opsional)
- <input id="fproofFile" type="file" accept="image/*,.pdf">
- <div class="filehint">Upload foto/scan bukti atau PDF. Maksimal 2 MB.</div>
- ${x.proofData?`<div class="prooffile">File saat ini: <b>${esc(x.proofName||'Bukti transaksi')}</b><button type="button" class="alt" onclick="clearProof()">Hapus file</button></div>`:''}
- <input id="fproof" type="hidden" value="${esc(x.proof||'')}">
- <input id="fproofData" type="hidden" value="${esc(x.proofData||'')}">
- <input id="fproofName" type="hidden" value="${esc(x.proofName||'')}">
-</label></div>
- <div class="actions" style="margin-top:12px"><button onclick="submitForm()">Simpan</button><button class="alt" onclick="cancelForm()">Batal</button></div></div>`;
-}
-function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
-async function submitForm(){
- const file=document.getElementById('fproofFile')?.files?.[0];
- let proofData=document.getElementById('fproofData')?.value||'';
- let proofName=document.getElementById('fproofName')?.value||'';
- if(file){
-   if(file.size>2*1024*1024){alert('Ukuran file maksimal 2 MB.');return}
-   proofData=await new Promise((resolve,reject)=>{
-     const r=new FileReader();
-     r.onload=()=>resolve(r.result);
-     r.onerror=reject;
-     r.readAsDataURL(file);
-   });
-   proofName=file.name;
- }
- const item={
-   id:editId??Date.now(),
-   date:fdate.value,
-   type:ftype.value,
-   description:fdesc.value.trim(),
-   amount:Number(famount.value),
-   proof:fproof.value.trim(),
-   proofData:proofData,
-   proofName:proofName
- };
- if(!item.date||!item.description||!item.amount){alert('Lengkapi tanggal, deskripsi, dan nominal.');return}
- data=editId==null?[item,...data]:data.map(x=>x.id===editId?item:x);
- editId=null;save();document.getElementById('formArea').innerHTML='';
-}
-function clearProof(){document.getElementById('fproofData').value='';document.getElementById('fproofName').value='';document.querySelector('.prooffile')?.remove()}
-function cancelForm(){editId=null;document.getElementById('formArea').innerHTML=''}
-function del(id){if(confirm('Hapus transaksi ini?')){data=data.filter(x=>x.id!==id);save()}}
-function bindAdminButton(){
- const btn=document.getElementById('adminBtn');
- if(btn){
-   btn.onclick=null;
-   btn.addEventListener('click',adminLogin);
-   btn.addEventListener('touchend',function(e){e.preventDefault();adminLogin();},{passive:false});
- }
-}
-function render(){
- const q=(document.getElementById('search')?.value||'').toLowerCase();
- const filtered=data.filter(x=>(x.date+' '+x.description).toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date));
- let masuk=data.filter(x=>x.type==='in').reduce((a,x)=>a+x.amount,0), keluar=data.filter(x=>x.type==='out').reduce((a,x)=>a+x.amount,0);
- document.getElementById('masuk').textContent=rupiah(masuk);document.getElementById('keluar').textContent=rupiah(keluar);document.getElementById('saldo').textContent=rupiah(masuk-keluar);
- document.getElementById('aksiHead').style.display=admin?'table-cell':'none';
- document.querySelector('.top .actions').innerHTML=(admin?'<button onclick="showForm()">+ Tambah</button><button class="alt" onclick="logout()">Keluar Admin</button>':'<button type="button" id="adminBtn">ðŸ” Login Admin</button>')+'<button class="alt" onclick="printPDF()">Export PDF</button><button class="alt" onclick="exportCSV()">Export Excel</button>';
- bindAdminButton();
- document.getElementById('rows').innerHTML=filtered.length?filtered.map(x=>`<tr><td>${x.date}</td><td><span class="badge ${x.type==='in'?'bin':'bout'}">${x.type==='in'?'MASUK':'KELUAR'}</span></td><td>${esc(x.description)}</td><td class="${x.type}">${rupiah(x.amount)}</td><td>${x.proofData?`<a class="alt" style="display:inline-block;text-decoration:none" href="${x.proofData}" target="_blank" rel="noopener">Lihat ${esc(x.proofName||'Bukti')}</a>`:x.proof?`<a class="alt" style="display:inline-block;text-decoration:none" href="${esc(x.proof)}" target="_blank" rel="noopener">Lihat</a>`:'â€”'}</td>${admin?`<td><div class="actions"><button class="alt" onclick="showForm(${x.id})">Edit</button><button class="red" onclick="del(${x.id})">Hapus</button></div></td>`:''}</tr>`).join(''):'<tr><td colspan="6" class="empty">Belum ada transaksi.</td></tr>';
-}
-function exportCSV(){
- const rows=[['Tanggal','Jenis','Deskripsi','Nominal','Bukti'],...data.map(x=>[x.date,x.type==='in'?'Uang Masuk':'Uang Keluar',x.description,x.amount,x.proof||''])];
- const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='Laporan-Kas-Kampoeng-Dara.csv';a.click();
-}
-function printPDF(){window.print()}
+
+const KEY='kampoeng_dara_html_v1',
+PINKEY='kampoeng_dara_pin';
+
+const DEFAULT_PIN='MDEwNjIwMjY=';
+
+let data=JSON.parse(localStorage.getItem(KEY)||'[]'),
+admin=false,
+editId=null;
+
+const rupiah=n=>
+new Intl.NumberFormat('id-ID',{
+style:'currency',
+currency:'IDR',
+maximumFractionDigits:0
+}).format(n);
+
+function save(){
+localStorage.setItem(KEY,JSON.stringify(data));
 render();
+}
+
+function decodePin(v){
+try{
+return decodeURIComponent(escape(atob(v)))
+}catch(e){
+return atob(v)
+}
+}
+
+function adminLogin(){
+
+try{
+
+const p=window.prompt('Masukkan PIN Admin:');
+
+if(p===null)return;
+
+const saved=localStorage.getItem(PINKEY);
+
+const correct=
+saved
+?
+(p===saved || p===decodePin(saved))
+:
+p===decodePin(DEFAULT_PIN);
+
+if(correct){
+
+admin=true;
+
+render();
+
+showForm();
+
+}else{
+
+window.alert('PIN salah. Silakan coba lagi.');
+
+}
+
+}catch(e){
+
+window.alert(
+'Login Admin gagal dibuka. Silakan refresh halaman dan coba lagi.'
+);
+
+}
+
+}
+
+function logout(){
+admin=false;
+editId=null;
+render();
+}
+
+function showForm(id=null){
+
+if(!admin)return;
+
+editId=id;
+
+const x=
+id==null
+?
+{
+date:new Date().toISOString().slice(0,10),
+type:'in',
+description:'',
+amount:'',
+proof:''
+}
+:
+data.find(a=>a.id===id);
+
+document.getElementById('formArea').innerHTML=`
+
+<div class="form">
+
+<b>${id==null?'Tambah':'Edit'} Transaksi</b>
+
+<div class="grid">
+
+<label>
+Tanggal
+<input id="fdate" type="date" value="${x.date}">
+</label>
+
+<label>
+Jenis
+<select id="ftype">
+<option value="in" ${x.type==='in'?'selected':''}>
+Uang Masuk
+</option>
+
+<option value="out" ${x.type==='out'?'selected':''}>
+Uang Keluar
+</option>
+
+</select>
+</label>
+
+<label>
+Nominal
+<input id="famount" type="number" min="1" value="${x.amount}">
+</label>
+
+<label>
+Deskripsi
+<input id="fdesc" value="${esc(x.description)}">
+</label>
+
+<label class="full">
+
+Bukti transaksi (opsional)
+
+<input id="fproofFile"
+type="file"
+accept="image/*,.pdf">
+
+<div class="filehint">
+Upload foto/scan bukti atau PDF. Maksimal 2 MB.
+</div>
+
+${x.proofData?
+
+`<div class="prooffile">
+File saat ini:
+<b>${esc(x.proofName||'Bukti transaksi')}</b>
+
+<button type="button"
+class="alt"
+onclick="clearProof()">
+Hapus file
+</button>
+
+</div>`
+
+:''}
+
+<input id="fproof"
+type="hidden"
+value="${esc(x.proof||'')}">
+
+<input id="fproofData"
+type="hidden"
+value="${esc(x.proofData||'')}">
+
+<input id="fproofName"
+type="hidden"
+value="${esc(x.proofName||'')}">
+
+</label>
+
+</div>
+
+<div class="actions" style="margin-top:12px">
+
+<button onclick="submitForm()">
+Simpan
+</button>
+
+<button class="alt" onclick="cancelForm()">
+Batal
+</button>
+
+</div>
+
+</div>
+`;
+
+}
+
+function esc(s){
+
+return String(s)
+.replaceAll('&','&amp;')
+.replaceAll('"','&quot;')
+.replaceAll('<','&lt;')
+.replaceAll('>','&gt;');
+
+}
+
+async function submitForm(){
+
+const file=
+document.getElementById('fproofFile')
+?.files?.[0];
+
+let proofData=
+document.getElementById('fproofData')
+?.value||'';
+
+let proofName=
+document.getElementById('fproofName')
+?.value||'';
+
+if(file){
+
+if(file.size>2*1024*1024){
+
+alert('Ukuran file maksimal 2 MB.');
+return;
+
+}
+
+proofData=await new Promise((resolve,reject)=>{
+
+const r=new FileReader();
+
+r.onload=()=>resolve(r.result);
+
+r.onerror=reject;
+
+r.readAsDataURL(file);
+
+});
+
+proofName=file.name;
+
+}
+
+const item={
+
+id:editId??Date.now(),
+
+date:fdate.value,
+
+type:ftype.value,
+
+description:fdesc.value.trim(),
+
+amount:Number(famount.value),
+
+proof:fproof.value.trim(),
+
+proofData:proofData,
+
+proofName:proofName
+
+};
+
+if(
+!item.date||
+!item.description||
+!item.amount
+){
+
+alert(
+'Lengkapi tanggal, deskripsi, dan nominal.'
+);
+
+return;
+
+}
+
+data=
+editId==null
+?
+[item,...data]
+:
+data.map(x=>
+x.id===editId?item:x
+);
+
+editId=null;
+
+save();
+
+document.getElementById('formArea').innerHTML='';
+
+}
+
+function clearProof(){
+
+document.getElementById('fproofData').value='';
+
+document.getElementById('fproofName').value='';
+
+document.querySelector('.prooffile')?.remove();
+
+}
+
+function cancelForm(){
+
+editId=null;
+
+document.getElementById('formArea').innerHTML='';
+
+}
+
+function del(id){
+
+if(confirm('Hapus transaksi ini?')){
+
+data=data.filter(x=>x.id!==id);
+
+save();
+
+}
+
+}
+
+function bindAdminButton(){
+
+const btn=document.getElementById('adminBtn');
+
+if(btn){
+
+btn.onclick=null;
+
+btn.addEventListener(
+'click',
+adminLogin
+);
+
+btn.addEventListener(
+'touchend',
+function(e){
+
+e.preventDefault();
+
+adminLogin();
+
+},
+{passive:false}
+);
+
+}
+
+}
+
+function render(){
+
+const q=
+(document.getElementById('search')?.value||'')
+.toLowerCase();
+
+const filtered=
+data
+.filter(x=>
+(x.date+' '+x.description)
+.toLowerCase()
+.includes(q)
+)
+.sort((a,b)=>
+b.date.localeCompare(a.date)
+);
+
+let masuk=
+data
+.filter(x=>x.type==='in')
+.reduce((a,x)=>a+x.amount,0);
+
+let keluar=
+data
+.filter(x=>x.type==='out')
+.reduce((a,x)=>a+x.amount,0);
+
+document.getElementById('masuk')
+.textContent=rupiah(masuk);
+
+document.getElementById('keluar')
+.textContent=rupiah(keluar);
+
+document.getElementById('saldo')
+.textContent=rupiah(masuk-keluar);
+
+document.getElementById('aksiHead')
+.style.display=
+admin?'table-cell':'none';
+
+document.querySelector('.top .actions')
+.innerHTML=
+
+(
+admin
+?
+
+'<button onclick="showForm()">+ Tambah</button>'+
+'<button class="alt" onclick="logout()">Keluar Admin</button>'
+
+:
+
+'<button type="button" id="adminBtn" aria-label="Login Admin">'+
+'<svg class="admin-icon" viewBox="0 0 24 24" aria-hidden="true">'+
+'<path d="M7 10V7a5 5 0 0 1 10 0v3"/>'+
+'<rect x="4" y="10" width="16" height="11" rx="2"/>'+
+'<circle cx="12" cy="15" r="1.2"/>'+
+'<path d="M12 16.2V18"/>'+
+'</svg>'+
+'<span>Login Admin</span>'+
+'</button>'
+
+)
+
++
+'<button class="alt" onclick="printPDF()">Export PDF</button>'+
+'<button class="alt" onclick="exportCSV()">Export Excel</button>';
+
 bindAdminButton();
+
+document.getElementById('rows').innerHTML=
+
+filtered.length
+
+?
+
+filtered.map(x=>
+
+`<tr>
+
+<td>${x.date}</td>
+
+<td>
+<span class="badge ${x.type==='in'?'bin':'bout'}">
+${x.type==='in'?'MASUK':'KELUAR'}
+</span>
+</td>
+
+<td>${esc(x.description)}</td>
+
+<td class="${x.type}">
+${rupiah(x.amount)}
+</td>
+
+<td>
+
+${
+x.proofData
+?
+
+`<a class="alt"
+style="display:inline-block;text-decoration:none"
+href="${x.proofData}"
+target="_blank"
+rel="noopener">
+Lihat ${esc(x.proofName||'Bukti')}
+</a>`
+
+:
+
+x.proof
+
+?
+
+`<a class="alt"
+style="display:inline-block;text-decoration:none"
+href="${esc(x.proof)}"
+target="_blank"
+rel="noopener">
+Lihat
+</a>`
+
+:
+
+'—'
+}
+
+</td>
+
+${
+admin
+
+?
+
+`<td>
+
+<div class="actions">
+
+<button class="alt"
+onclick="showForm(${x.id})">
+Edit
+</button>
+
+<button class="red"
+onclick="del(${x.id})">
+Hapus
+</button>
+
+</div>
+
+</td>`
+
+:
+
+''
+}
+
+</tr>`
+
+).join('')
+
+:
+
+'<tr><td colspan="6" class="empty">Belum ada transaksi.</td></tr>';
+
+}
+
+function exportCSV(){
+
+const rows=[
+
+['Tanggal','Jenis','Deskripsi','Nominal','Bukti'],
+
+...data.map(x=>[
+x.date,
+x.type==='in'?'Uang Masuk':'Uang Keluar',
+x.description,
+x.amount,
+x.proof||''
+])
+
+];
+
+const csv=
+'\ufeff'+
+rows
+.map(r=>
+r.map(v=>
+`"${String(v).replaceAll('"','""')}"`
+).join(',')
+)
+.join('\n');
+
+const a=document.createElement('a');
+
+a.href=
+URL.createObjectURL(
+new Blob(
+[csv],
+{type:'text/csv;charset=utf-8'}
+)
+);
+
+a.download=
+'Laporan-Kas-Kampoeng-Dara.csv';
+
+a.click();
+
+}
+
+function printPDF(){
+
+window.print();
+
+}
+
+render();
+
+bindAdminButton();
+
 </script>
-</body></html>
+
+</body>
+</html>
