@@ -111,7 +111,7 @@ editId=null;document.getElementById('formArea').innerHTML='';await loadData();
 }catch(e){console.error(e);alert('Gagal menyimpan transaksi/bukti: '+e.message)}
 }
 function cancelForm(){editId=null;document.getElementById('formArea').innerHTML=''}
-async function del(id){if(!admin)return;if(!confirm('Hapus transaksi ini?'))return;const x=data.find(a=>String(a.id)===String(id));const {error}=await db.from('transaksi').delete().eq('id',id);if(error){console.error(error);alert('Gagal menghapus: '+error.message);return}const path=x?.bukti_path||storagePathFromUrl(x?.bukti_url);if(path)await deleteProof(path);await loadData()}=await db.from('transaksi').delete().eq('id',id);if(error){console.error(error);alert('Gagal menghapus: '+error.message);return}await loadData()}
+async function del(id){if(!admin)return;if(!confirm('Hapus transaksi ini?'))return;const x=data.find(a=>String(a.id)===String(id));const {error}=await db.from('transaksi').delete().eq('id',id);if(error){console.error(error);alert('Gagal menghapus: '+error.message);return}const path=x?.bukti_path||storagePathFromUrl(x?.bukti_url);if(path)await deleteProof(path);await loadData()}
 function render(){
 const q=(document.getElementById('search')?.value||'').toLowerCase(),filtered=data.filter(x=>(String(x.tanggal)+' '+String(x.deskripsi)).toLowerCase().includes(q)).sort((a,b)=>{const d=String(b.tanggal).localeCompare(String(a.tanggal));return d!==0?d:Number(b.id)-Number(a.id)});
 const masuk=data.filter(x=>x.jenis==='in').reduce((a,x)=>a+Number(x.nominal||0),0),keluar=data.filter(x=>x.jenis==='out').reduce((a,x)=>a+Number(x.nominal||0),0);
