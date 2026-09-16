@@ -40,6 +40,13 @@ const SUPABASE_PUBLISHABLE_KEY='sb_publishable_fZMRhq7gc9fJ0CCbphB6eg_A6t1xqFl';
 const {createClient}=supabase;
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let data=[],admin=false,editId=null,currentUser=null;
+let pendingUploadFile=null;
+const DRAFT_DB='kampoengDaraUploadDraft';
+function openDraftDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DRAFT_DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+async function saveDraft(file){try{const dbx=await openDraftDB(),tx=dbx.transaction('draft','readwrite');tx.objectStore('draft').put({tanggal:document.getElementById('fdate')?.value||'',jenis:document.getElementById('ftype')?.value||'in',nominal:document.getElementById('famount')?.value||'',deskripsi:document.getElementById('fdesc')?.value||'',name:file?.name||'',type:file?.type||'',size:file?.size||0,file:file||null},'current');return true}catch(e){console.warn('Draft upload tidak tersimpan:',e);return false}}
+async function getDraft(){try{const dbx=await openDraftDB();return await new Promise((resolve,reject)=>{const r=dbx.transaction('draft','readonly').objectStore('draft').get('current');r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error)})}catch(e){return null}}
+async function clearDraft(){try{const dbx=await openDraftDB();dbx.transaction('draft','readwrite').objectStore('draft').delete('current')}catch(e){}}
+
 const rupiah=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n)||0);
 const esc=s=>String(s??'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 function setStatus(t,ok=false){const e=document.getElementById('status');e.textContent=t;e.style.color=ok?'#23753d':'#68736a'}
@@ -53,6 +60,7 @@ async function init(){
 const {data:{session}}=await db.auth.getSession();currentUser=session?.user||null;admin=!!currentUser;
 db.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;admin=!!currentUser;editId=null;document.getElementById('formArea').innerHTML='';render()});
 await loadData();
+if(admin){const d=await getDraft();if(d){showForm(null,d);pendingUploadFile=d.file||null}}
 }
 function showLogin(){
 document.getElementById('modal').innerHTML=`<div class="modal"><div class="box"><h3>Login Admin</h3><p style="font-size:13px;color:#68736a">Masukkan email dan password Admin Supabase.</p><label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="Email admin"></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password admin"></label><div id="loginError" class="error"></div><div class="actions" style="margin-top:14px"><button type="button" onclick="doLogin()">Masuk</button><button type="button" class="alt" onclick="closeModal()">Batal</button></div></div></div>`;
@@ -68,12 +76,17 @@ if(error){console.error(error);err.textContent='Login gagal: '+error.message;ret
 currentUser=authData.user;admin=true;closeModal();render();showForm();
 }
 async function logout(){await db.auth.signOut();admin=false;currentUser=null;editId=null;document.getElementById('formArea').innerHTML='';render()}
-function showForm(id=null){
+function showForm(id=null,draft=null){
 if(!admin)return;editId=id;
-const x=id==null?{tanggal:new Date().toISOString().slice(0,10),jenis:'in',deskripsi:'',nominal:'',bukti_url:'',bukti_nama:'',bukti_path:''}:data.find(a=>String(a.id)===String(id));if(!x)return;
-document.getElementById('formArea').innerHTML=`<div class="form"><b>${id==null?'Tambah':'Edit'} Transaksi</b><div class="grid"><label>Tanggal<input id="fdate" type="date" value="${esc(x.tanggal)}"></label><label>Jenis<select id="ftype"><option value="in" ${x.jenis==='in'?'selected':''}>Uang Masuk</option><option value="out" ${x.jenis==='out'?'selected':''}>Uang Keluar</option></select></label><label>Nominal<input id="famount" type="number" min="1" step="1" value="${esc(x.nominal)}"></label><label>Deskripsi<input id="fdesc" value="${esc(x.deskripsi)}"></label><label class="full">Upload bukti transaksi (opsional)<div class="uploadbox"><input id="fproof" type="file" accept="image/*,.pdf,application/pdf" aria-label="Pilih bukti transaksi dari HP atau komputer"><div id="fileSelected" class="filehint">Belum ada file dipilih.</div><div class="filehint">Format: foto JPG, PNG, WEBP atau PDF. Maksimal 10 MB. Foto HP besar akan diperkecil otomatis.</div>${x.bukti_url?`<div class="prooffile">Bukti saat ini: <a href="${esc(x.bukti_url)}" target="_blank" rel="noopener">${esc(x.bukti_nama||'Lihat bukti')}</a></div>`:''}</div></label></div><div class="actions" style="margin-top:12px"><button type="button" onclick="submitForm()">Simpan</button><button type="button" class="alt" onclick="cancelForm()">Batal</button></div></div>`;
+const x=id==null?{tanggal:draft?.tanggal||new Date().toISOString().slice(0,10),jenis:draft?.jenis||'in',deskripsi:draft?.deskripsi||'',nominal:draft?.nominal||'',bukti_url:'',bukti_nama:'',bukti_path:''}:data.find(a=>String(a.id)===String(id));if(!x)return;
+const draftName=draft?.name||pendingUploadFile?.name||'';
+document.getElementById('formArea').innerHTML=`<div class="form"><b>${id==null?'Tambah':'Edit'} Transaksi</b><div class="grid"><label>Tanggal<input id="fdate" type="date" value="${esc(x.tanggal)}" onchange="saveCurrentDraft()"></label><label>Jenis<select id="ftype" onchange="saveCurrentDraft()"><option value="in" ${x.jenis==='in'?'selected':''}>Uang Masuk</option><option value="out" ${x.jenis==='out'?'selected':''}>Uang Keluar</option></select></label><label>Nominal<input id="famount" type="number" min="1" step="1" value="${esc(x.nominal)}" oninput="saveCurrentDraft()"></label><label>Deskripsi<input id="fdesc" value="${esc(x.deskripsi)}" oninput="saveCurrentDraft()"></label><label class="full">Upload bukti transaksi (opsional)<div class="uploadbox"><input id="fproof" type="file" accept="image/*,.pdf,application/pdf" aria-label="Pilih bukti transaksi dari HP atau komputer" onchange="showSelectedFile(this)"><div id="fileSelected" class="filehint">${draftName?`File dipilih: ${esc(draftName)}`:'Belum ada file dipilih.'}</div><div class="filehint">Format: foto JPG, PNG, WEBP atau PDF. Maksimal 10 MB. Foto HP besar akan diperkecil otomatis.</div>${x.bukti_url?`<div class="prooffile">Bukti saat ini: <a href="${esc(x.bukti_url)}" target="_blank" rel="noopener">${esc(x.bukti_nama||'Lihat bukti')}</a></div>`:''}</div></label></div><div class="actions" style="margin-top:12px"><button type="button" onclick="submitForm()">Simpan</button><button type="button" class="alt" onclick="cancelForm()">Batal</button></div></div>`;
 }
-const pf=document.getElementById('fproof'); if(pf) pf.addEventListener('change',showSelectedFile);
+async function showSelectedFile(input){
+const f=input?.files?.[0]||null;pendingUploadFile=f;const out=document.getElementById('fileSelected');if(out)out.textContent=f?`File dipilih: ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`:'Belum ada file dipilih.';if(f)await saveDraft(f);else await saveCurrentDraft();
+}
+async function saveCurrentDraft(){const f=document.getElementById('fproof')?.files?.[0]||pendingUploadFile||null;await saveDraft(f)}
+
 const STORAGE_BUCKET='bukti-transaksi';
 function storagePathFromUrl(url){
 try{const marker=`/storage/v1/object/public/${STORAGE_BUCKET}/`;const i=String(url||'').indexOf(marker);return i>=0?String(url).slice(i+marker.length):''}catch(e){return ''}
@@ -91,8 +104,9 @@ function fileMime(file){
   if(n.endsWith('.pdf')) return 'application/pdf';
   return 'application/octet-stream';
 }
-function showSelectedFile(){
-  const input=document.getElementById('fproof'),out=document.getElementById('fileSelected');
+function showSelectedFile(input){
+  input=input||document.getElementById('fproof');
+  const out=document.getElementById('fileSelected');
   if(!out)return;
   const f=input?.files?.[0];
   out.textContent=f?`File dipilih: ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`:'Belum ada file dipilih.';
@@ -146,7 +160,7 @@ if(error)console.warn('Bukti lama tidak terhapus dari Storage:',error.message);
 }
 async function submitForm(){
 if(!admin){alert('Silakan login sebagai Admin.');return}
-const tanggal=document.getElementById('fdate').value,jenis=document.getElementById('ftype').value,nominal=Number(document.getElementById('famount').value),deskripsi=document.getElementById('fdesc').value.trim(),file=document.getElementById('fproof')?.files?.[0]||null;
+const tanggal=document.getElementById('fdate').value,jenis=document.getElementById('ftype').value,nominal=Number(document.getElementById('famount').value),deskripsi=document.getElementById('fdesc').value.trim(),file=document.getElementById('fproof')?.files?.[0]||pendingUploadFile||null;
 if(!tanggal||!deskripsi||!nominal||nominal<=0){alert('Lengkapi tanggal, deskripsi, dan nominal.');return}
 try{
 let bukti_url=null,bukti_nama=null,bukti_path=null;
@@ -157,10 +171,10 @@ const item={tanggal,jenis,deskripsi,nominal,bukti_url,bukti_nama,bukti_path};
 const result=editId==null?await db.from('transaksi').insert(item).select().single():await db.from('transaksi').update(item).eq('id',editId).select().single();
 if(result.error){if(file&&bukti_path)await deleteProof(bukti_path);throw result.error}
 if(file&&existing){const oldPath=existing.bukti_path||storagePathFromUrl(existing.bukti_url);if(oldPath&&oldPath!==bukti_path)await deleteProof(oldPath)}
-editId=null;document.getElementById('formArea').innerHTML='';await loadData();
+editId=null;pendingUploadFile=null;await clearDraft();document.getElementById('formArea').innerHTML='';await loadData();
 }catch(e){console.error(e);alert('Gagal menyimpan transaksi/bukti: '+e.message)}
 }
-function cancelForm(){editId=null;document.getElementById('formArea').innerHTML=''}
+async function cancelForm(){editId=null;pendingUploadFile=null;await clearDraft();document.getElementById('formArea').innerHTML=''}
 async function del(id){if(!admin)return;if(!confirm('Hapus transaksi ini?'))return;const x=data.find(a=>String(a.id)===String(id));const {error}=await db.from('transaksi').delete().eq('id',id);if(error){console.error(error);alert('Gagal menghapus: '+error.message);return}const path=x?.bukti_path||storagePathFromUrl(x?.bukti_url);if(path)await deleteProof(path);await loadData()}
 function render(){
 const q=(document.getElementById('search')?.value||'').toLowerCase(),filtered=data.filter(x=>(String(x.tanggal)+' '+String(x.deskripsi)).toLowerCase().includes(q)).sort((a,b)=>{const d=String(b.tanggal).localeCompare(String(a.tanggal));return d!==0?d:Number(b.id)-Number(a.id)});
