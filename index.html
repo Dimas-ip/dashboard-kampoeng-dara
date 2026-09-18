@@ -72,7 +72,7 @@ th{font-size:11px;color:#69736b;text-transform:uppercase}
   <div class="wrap">
     <small>LAPORAN KAS • ONLINE</small>
     <h1>Dashboard Keuangan Perum Kampoeng Dara</h1>
-    <p>Kelola uang masuk, uang keluar, sisa kas, dan bukti transaksi berdasarkan periode tanggal 6 sampai tanggal 5.</p>
+    <p>Kelola uang masuk, uang keluar, sisa kas, dan bukti transaksi berdasarkan periode tanggal 6 sampai tanggal 5, dimulai 6 Agustus 2026.</p>
   </div>
 </header>
 
@@ -142,7 +142,7 @@ const {createClient}=supabase;
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 
 const STORAGE_BUCKET='bukti-transaksi';
-const PERIOD_ANCHOR='2026-09-06';
+const PERIOD_ANCHOR='2026-08-06';
 const DRAFT_DB='kampoengDaraUploadDraft';
 
 let data=[];
@@ -306,7 +306,7 @@ function buildPeriodOptions(){
     maxDate?periodIndexForDate(maxDate):currentPeriodIndex
   )+6;
 
-  const minIndex=Math.min(-2,currentPeriodIndex-2);
+  const minIndex=0;
   let html='';
 
   for(let i=minIndex;i<=maxIndex;i++){
@@ -337,7 +337,7 @@ function changePeriod(v){
 }
 
 function shiftPeriod(n){
-  currentPeriodIndex+=n;
+  currentPeriodIndex=Math.max(0,currentPeriodIndex+n);
   buildPeriodOptions();
   updatePeriodLabel();
   render();
@@ -357,10 +357,28 @@ function periodTransactions(){
 */
 function carryInBalance(){
   const {start}=getPeriod();
-  const before=data.filter(x=>String(x.tanggal)<iso(start));
+
+  /*
+    Periode pertama dimulai 6 Agustus 2026, jadi saldo awalnya Rp0.
+    Transaksi sebelum tanggal anchor tidak ikut dihitung.
+
+    Untuk periode berikutnya, saldo awal adalah saldo kumulatif
+    transaksi sejak 6 Agustus 2026 sampai tanggal 5 periode sebelumnya.
+    Dengan cara ini saldo tidak dobel dan transaksi lama sebelum
+    periode awal tidak ikut masuk ke pembukuan.
+  */
+  if(currentPeriodIndex<=0)return 0;
+
+  const startIso=iso(start);
+  const before=data.filter(x=>{
+    const t=String(x.tanggal);
+    return t>=PERIOD_ANCHOR && t<startIso;
+  });
 
   return before.reduce(
-    (a,x)=>a+(x.jenis==='in'?Number(x.nominal||0):-Number(x.nominal||0)),0
+    (a,x)=>a+(x.jenis==='in'
+      ? Number(x.nominal||0)
+      : -Number(x.nominal||0)),0
   );
 }
 
@@ -914,7 +932,7 @@ function render(){
     Tanggalnya selalu tanggal 6 periode berjalan.
   */
   const carryDescription=currentPeriodIndex===0
-    ?`Saldo kas sampai 5 September 2026 / saldo awal periode`
+    ?`Saldo kas sampai 5 Agustus 2026 / saldo awal periode`
     :`Sisa kas periode sebelumnya sampai ${formatDateID(
         new Date(start.getFullYear(),start.getMonth(),5)
       )}`;
@@ -994,7 +1012,7 @@ function exportCSV(){
       iso(start),
       'Uang Masuk',
       currentPeriodIndex===0
-        ?'Saldo kas sampai 5 September 2026 / saldo awal periode'
+        ?'Saldo kas sampai 5 Agustus 2026 / saldo awal periode'
         :`Sisa kas periode sebelumnya sampai ${formatDateID(
             new Date(start.getFullYear(),start.getMonth(),5)
           )}`,
