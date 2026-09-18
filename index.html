@@ -4,101 +4,1042 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboard Keuangan Perum Kampoeng Dara</title>
-<!-- Dashboard Kampoeng Dara: periode kas 6 s/d 5 + mobile proof upload -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6f4;color:#182019}
-header{background:#182019;color:#fff;padding:28px 18px 70px}header h1{margin:8px 0;font-size:28px}header p{margin:0;color:#cbd3cc}.wrap{max-width:1150px;margin:auto;padding:0 16px 40px}
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:-42px}.card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 4px 16px #0001}.card span{color:#68736a;font-size:13px}.card strong{display:block;font-size:23px;margin-top:8px}.in{color:#23753d}.out{color:#b43d32}.opening{color:#45634e}.balance{background:#28583b;color:#fff}.balance span{color:#d7e4da}
-.panel{background:#fff;margin-top:18px;padding:20px;border-radius:14px;box-shadow:0 4px 16px #0001}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.periodbox{background:#eef3ee;border-radius:12px;padding:14px;margin-top:15px}.periodrow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end}.periodbox small{color:#59655c}.periodbox strong{display:block;margin-top:4px}.periodnav{display:flex;gap:7px}
-button{border:0;border-radius:9px;padding:11px 15px;background:#28583b;color:#fff;font-weight:600;cursor:pointer}button.alt{background:#eef1ee;color:#182019}button.red{background:#b43d32}button:disabled{opacity:.45;cursor:not-allowed}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f4;color:#182019}
+header{background:#182019;color:#fff;padding:28px 18px 70px}
+header h1{margin:8px 0;font-size:28px}
+header p{margin:0;color:#cbd3cc}
+.wrap{max-width:1150px;margin:auto;padding:0 16px 40px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:-42px}
+.card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 4px 16px #0001}
+.card span{color:#68736a;font-size:13px}
+.card strong{display:block;font-size:23px;margin-top:8px}
+.in{color:#23753d}.out{color:#b43d32}.opening{color:#45634e}
+.balance{background:#28583b;color:#fff}.balance span{color:#d7e4da}
+.panel{background:#fff;margin-top:18px;padding:20px;border-radius:14px;box-shadow:0 4px 16px #0001}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.periodbox{background:#eef3ee;border-radius:12px;padding:14px;margin-top:15px}
+.periodrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.periodbox small{color:#59655c}.periodbox strong{display:block;margin-top:4px}
+.periodnav{display:flex;gap:7px}
+button{border:0;border-radius:9px;padding:11px 15px;background:#28583b;color:#fff;font-weight:600;cursor:pointer}
+button.alt{background:#eef1ee;color:#182019}
+button.red{background:#b43d32}
+button:disabled{opacity:.45;cursor:not-allowed}
 button .admin-icon{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:7px;pointer-events:none}
-input,select{width:100%;padding:11px;border:1px solid #ccd3cd;border-radius:8px;margin-top:6px;background:#fff}label{font-size:13px;color:#4e594f}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}.full{grid-column:1/-1}
-.form{background:#f6f8f6;padding:15px;border-radius:10px;margin:15px 0}.actions{display:flex;gap:7px;flex-wrap:wrap}.table{overflow:auto;margin-top:14px}table{width:100%;border-collapse:collapse;min-width:800px}th,td{text-align:left;padding:12px 9px;border-bottom:1px solid #e3e7e3;font-size:14px}th{font-size:11px;color:#69736b;text-transform:uppercase}.badge{padding:5px 8px;border-radius:99px;font-size:11px;font-weight:bold}.bin{background:#e0f1e4;color:#28623b}.bout{background:#f4dfdc;color:#a33b31}.bopen{background:#e7eee8;color:#45634e}.empty{text-align:center;padding:25px;color:#7a837c}.note{margin-top:15px;padding:13px;background:#eef3ee;border-radius:10px;color:#5d675f;font-size:13px}.status{font-size:12px;margin-top:8px;color:#68736a}.filehint{font-size:12px;color:#68736a;margin-top:6px}.uploadbox{margin-top:6px;padding:12px;background:#fff;border:1px dashed #bfc9c0;border-radius:8px}.uploadbox input[type=file]{font-size:14px;min-height:44px}.uploadbox .filehint{word-break:break-word}.prooffile{margin-top:6px}.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}.box{background:#fff;border-radius:14px;padding:22px;width:min(420px,100%);box-shadow:0 12px 40px #0003}.box h3{margin-top:0}.error{color:#b43d32;font-size:13px;margin-top:10px}.hidden{display:none!important}
+input,select{width:100%;padding:11px;border:1px solid #ccd3cd;border-radius:8px;margin-top:6px;background:#fff}
+label{font-size:13px;color:#4e594f}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}
+.full{grid-column:1/-1}
+.form{background:#f6f8f6;padding:15px;border-radius:10px;margin:15px 0}
+.actions{display:flex;gap:7px;flex-wrap:wrap}
+.table{overflow:auto;margin-top:14px}
+table{width:100%;border-collapse:collapse;min-width:850px}
+th,td{text-align:left;padding:12px 9px;border-bottom:1px solid #e3e7e3;font-size:14px}
+th{font-size:11px;color:#69736b;text-transform:uppercase}
+.badge{padding:5px 8px;border-radius:99px;font-size:11px;font-weight:bold}
+.bin{background:#e0f1e4;color:#28623b}.bout{background:#f4dfdc;color:#a33b31}.bopen{background:#e7eee8;color:#45634e}
+.empty{text-align:center;padding:25px;color:#7a837c}
+.note{margin-top:15px;padding:13px;background:#eef3ee;border-radius:10px;color:#5d675f;font-size:13px}
+.status{font-size:12px;margin-top:8px;color:#68736a}
+.filehint{font-size:12px;color:#68736a;margin-top:6px}
+.uploadbox{margin-top:6px;padding:12px;background:#fff;border:1px dashed #bfc9c0;border-radius:8px}
+.uploadbox input[type=file]{font-size:14px;min-height:44px}
+.uploadbox .filehint{word-break:break-word}
+.prooffile{margin-top:6px}
+.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+.box{background:#fff;border-radius:14px;padding:22px;width:min(420px,100%);box-shadow:0 12px 40px #0003}
+.box h3{margin-top:0}.error{color:#b43d32;font-size:13px;margin-top:10px}
+.hidden{display:none!important}
 @media(max-width:850px){.cards{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:700px){.cards{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.full{grid-column:auto}.periodrow{grid-template-columns:1fr}.periodnav{width:100%}.periodnav button{flex:1}header h1{font-size:23px}}
-@media print{button,.form,.search,.note,.status,.periodnav{display:none!important}header{padding-bottom:25px}.cards{margin-top:15px}.panel{box-shadow:none}.periodbox{background:#fff;padding:0}}
+@media(max-width:700px){
+  .cards{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.full{grid-column:auto}
+  .periodrow{grid-template-columns:1fr}.periodnav{width:100%}.periodnav button{flex:1}
+  header h1{font-size:23px}
+}
+@media print{
+  button,.form,.search,.note,.status,.periodnav{display:none!important}
+  header{padding-bottom:25px}.cards{margin-top:15px}.panel{box-shadow:none}
+  .periodbox{background:#fff;padding:0}
+}
 </style>
 </head>
 <body>
-<header><div class="wrap"><small>LAPORAN KAS • ONLINE</small><h1>Dashboard Keuangan Perum Kampoeng Dara</h1><p>Kelola uang masuk, uang keluar, sisa kas, dan bukti transaksi berdasarkan periode tanggal 6 sampai tanggal 5.</p></div></header>
+
+<header>
+  <div class="wrap">
+    <small>LAPORAN KAS • ONLINE</small>
+    <h1>Dashboard Keuangan Perum Kampoeng Dara</h1>
+    <p>Kelola uang masuk, uang keluar, sisa kas, dan bukti transaksi berdasarkan periode tanggal 6 sampai tanggal 5.</p>
+  </div>
+</header>
+
 <div class="wrap">
 <section class="cards">
-<div class="card"><span>Saldo Awal Periode</span><strong class="opening" id="saldoAwal">Rp0</strong></div>
-<div class="card"><span>Uang Masuk</span><strong class="in" id="masuk">Rp0</strong></div>
-<div class="card"><span>Uang Keluar</span><strong class="out" id="keluar">Rp0</strong></div>
-<div class="card balance"><span>Sisa Kas</span><strong id="saldo">Rp0</strong></div>
+  <div class="card"><span>Saldo Awal Periode</span><strong class="opening" id="saldoAwal">Rp0</strong></div>
+  <div class="card"><span>Uang Masuk</span><strong class="in" id="masuk">Rp0</strong></div>
+  <div class="card"><span>Uang Keluar</span><strong class="out" id="keluar">Rp0</strong></div>
+  <div class="card balance"><span>Sisa Kas</span><strong id="saldo">Rp0</strong></div>
 </section>
+
 <section class="panel">
-<div class="top"><div><small>BUKU KAS</small><h2 style="margin:6px 0">Transaksi</h2><div class="status" id="status">Menghubungkan ke database...</div></div><div class="actions" id="topActions"></div></div>
-<div class="periodbox"><small>PERIODE KEUANGAN</small><div class="periodrow"><div><strong id="periodLabel">6 September 2026 – 5 Oktober 2026</strong><select id="periodSelect" onchange="changePeriod(this.value)"></select></div><div class="periodnav"><button type="button" class="alt" onclick="shiftPeriod(-1)">← Sebelumnya</button><button type="button" class="alt" onclick="shiftPeriod(1)">Berikutnya →</button></div></div></div>
-<input class="search" id="search" placeholder="Cari transaksi pada periode ini..." oninput="render()">
-<div id="formArea"></div>
-<div class="table"><table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Deskripsi</th><th>Nominal</th><th>Bukti</th><th id="aksiHead" style="display:none">Aksi</th></tr></thead><tbody id="rows"></tbody></table></div>
-<div class="note">📌 <b>Aturan periode:</b> setiap periode berjalan dari tanggal 6 sampai tanggal 5 bulan berikutnya. Sisa kas pada tanggal 5 otomatis menjadi <b>Saldo Awal</b> pada tanggal 6 periode berikutnya. Saldo Awal ditampilkan sebagai baris khusus dan <b>tidak dihitung sebagai Uang Masuk baru</b>, sehingga saldo tidak terhitung dua kali. 🔐 Mode viewer hanya melihat data; Admin dapat menambah, mengedit, menghapus transaksi, dan mengunggah bukti.</div>
-</section></div>
+  <div class="top">
+    <div>
+      <small>BUKU KAS</small>
+      <h2 style="margin:6px 0">Transaksi</h2>
+      <div class="status" id="status">Menghubungkan ke database...</div>
+    </div>
+    <div class="actions" id="topActions"></div>
+  </div>
+
+  <div class="periodbox">
+    <small>PERIODE KEUANGAN</small>
+    <div class="periodrow">
+      <div>
+        <strong id="periodLabel">6 September 2026 – 5 Oktober 2026</strong>
+        <select id="periodSelect" onchange="changePeriod(this.value)"></select>
+      </div>
+      <div class="periodnav">
+        <button type="button" class="alt" onclick="shiftPeriod(-1)">← Sebelumnya</button>
+        <button type="button" class="alt" onclick="shiftPeriod(1)">Berikutnya →</button>
+      </div>
+    </div>
+  </div>
+
+  <input class="search" id="search" placeholder="Cari transaksi pada periode ini..." oninput="render()">
+  <div id="formArea"></div>
+
+  <div class="table">
+    <table>
+      <thead>
+        <tr>
+          <th>Tanggal</th><th>Jenis</th><th>Deskripsi</th><th>Nominal</th><th>Bukti</th>
+          <th id="aksiHead" style="display:none">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    📌 <b>Aturan periode:</b> periode keuangan selalu tanggal <b>6 sampai tanggal 5</b>.
+    Sisa kas pada tanggal 5 otomatis menjadi <b>Uang Masuk pada tanggal 6</b> periode berikutnya.
+    Baris otomatis ini hanya tampilan/perhitungan dan <b>tidak disimpan sebagai transaksi baru</b>,
+    sehingga saldo tidak akan dobel. 🔐 Viewer hanya melihat data; Admin dapat menambah, mengedit,
+    menghapus transaksi, dan mengunggah bukti.
+  </div>
+</section>
+</div>
+
 <div id="modal" class="hidden"></div>
+
 <script>
 const SUPABASE_URL='https://econrjptzlqjhevtlhxg.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_fZMRhq7gc9fJ0CCbphB6eg_A6t1xqFl';
 const {createClient}=supabase;
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
 const STORAGE_BUCKET='bukti-transaksi';
 const PERIOD_ANCHOR='2026-09-06';
-let data=[],admin=false,editId=null,currentUser=null,pendingUploadFile=null,currentPeriodIndex=0;
 const DRAFT_DB='kampoengDaraUploadDraft';
 
-const rupiah=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n)||0);
-const esc=s=>String(s??'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+let data=[];
+let admin=false;
+let editId=null;
+let currentUser=null;
+let pendingUploadFile=null;
+let currentPeriodIndex=0;
+
+const rupiah=n=>new Intl.NumberFormat('id-ID',{
+  style:'currency',currency:'IDR',maximumFractionDigits:0
+}).format(Number(n)||0);
+
+const esc=s=>String(s??'')
+  .replaceAll('&','&amp;')
+  .replaceAll('"','&quot;')
+  .replaceAll('<','&lt;')
+  .replaceAll('>','&gt;');
+
 const pad=n=>String(n).padStart(2,'0');
-const toDate=s=>{const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d)};
+const toDate=s=>{
+  const [y,m,d]=String(s).split('-').map(Number);
+  return new Date(y,m-1,d);
+};
 const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-function addMonths(date,n){const d=new Date(date.getFullYear(),date.getMonth(),1);d.setMonth(d.getMonth()+n);return d}
-function periodStartByIndex(i){const a=toDate(PERIOD_ANCHOR);return new Date(a.getFullYear(),a.getMonth()+i,6)}
-function periodEnd(start){return new Date(start.getFullYear(),start.getMonth()+1,5)}
-function periodIndexForDate(s){const d=toDate(s);const a=toDate(PERIOD_ANCHOR);return (d.getFullYear()-a.getFullYear())*12+(d.getMonth()-a.getMonth())-(d.getDate()<6?1:0)}
-function formatDateID(d){return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}
-function getCurrentPeriodIndex(){return periodIndexForDate(iso(new Date()))}
-function setStatus(t,ok=false){const e=document.getElementById('status');e.textContent=t;e.style.color=ok?'#23753d':'#68736a'}
 
-function openDraftDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DRAFT_DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('draft'))r.result.createObjectStore('draft');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);})}
-async function saveDraft(file){try{const f=file||pendingUploadFile||null;const record={tanggal:document.getElementById('fdate')?.value||'',jenis:document.getElementById('ftype')?.value||'in',nominal:document.getElementById('famount')?.value||'',deskripsi:document.getElementById('fdesc')?.value||'',name:f?.name||'',type:f?.type||'',size:f?.size||0,fileData:f?await f.arrayBuffer():null};const dbx=await openDraftDB();await new Promise((resolve,reject)=>{const tx=dbx.transaction('draft','readwrite');tx.objectStore('draft').put(record,'current');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Gagal menyimpan draft'));});return true}catch(e){console.warn(e);return false}}
-async function getDraft(){try{const dbx=await openDraftDB();const d=await new Promise((resolve,reject)=>{const r=dbx.transaction('draft','readonly').objectStore('draft').get('current');r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error)});if(d?.fileData){const blob=new Blob([d.fileData],{type:d.type||'application/octet-stream'});d.file=new File([blob],d.name||'bukti',{type:d.type||'application/octet-stream'});}else d.file=null;return d}catch(e){return null}}
-async function clearDraft(){try{const dbx=await openDraftDB();await new Promise((resolve,reject)=>{const tx=dbx.transaction('draft','readwrite');tx.objectStore('draft').delete('current');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});}catch(e){}}
+function periodStartByIndex(i){
+  const a=toDate(PERIOD_ANCHOR);
+  return new Date(a.getFullYear(),a.getMonth()+i,6);
+}
+function periodEnd(start){
+  return new Date(start.getFullYear(),start.getMonth()+1,5);
+}
+function periodIndexForDate(s){
+  const d=toDate(s);
+  const a=toDate(PERIOD_ANCHOR);
+  return (d.getFullYear()-a.getFullYear())*12+
+         (d.getMonth()-a.getMonth())-(d.getDate()<6?1:0);
+}
+function formatDateID(d){
+  return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+}
+function getCurrentPeriodIndex(){
+  return periodIndexForDate(iso(new Date()));
+}
+function setStatus(t,ok=false){
+  const e=document.getElementById('status');
+  e.textContent=t;
+  e.style.color=ok?'#23753d':'#68736a';
+}
 
-async function loadData(){setStatus('Memuat data online...');const {data:rows,error}=await db.from('transaksi').select('*').order('tanggal',{ascending:false}).order('id',{ascending:false});if(error){console.error(error);setStatus('Gagal memuat data: '+error.message);alert('Gagal memuat data online. Pastikan tabel transaksi dan policy Supabase sudah benar.');return}data=rows||[];setStatus('Data online tersinkron',true);buildPeriodOptions();render()}
-function getPeriod(){const start=periodStartByIndex(currentPeriodIndex);return {start,end:periodEnd(start)}}
-function buildPeriodOptions(){const sel=document.getElementById('periodSelect');if(!sel)return;const maxDate=data.reduce((m,x)=>x.tanggal&&x.tanggal>m?x.tanggal:m,'');let maxIndex=Math.max(currentPeriodIndex, maxDate?periodIndexForDate(maxDate):currentPeriodIndex)+6;let minIndex=Math.min(-2,currentPeriodIndex-2);let html='';for(let i=minIndex;i<=maxIndex;i++){const s=periodStartByIndex(i),e=periodEnd(s);html+=`<option value="${i}" ${i===currentPeriodIndex?'selected':''}>${formatDateID(s)} – ${formatDateID(e)}</option>`}sel.innerHTML=html;updatePeriodLabel()}
-function updatePeriodLabel(){const {start,end}=getPeriod();document.getElementById('periodLabel').textContent=`${formatDateID(start)} – ${formatDateID(end)}`;const sel=document.getElementById('periodSelect');if(sel)sel.value=String(currentPeriodIndex)}
-function changePeriod(v){currentPeriodIndex=Number(v);updatePeriodLabel();render()}
-function shiftPeriod(n){currentPeriodIndex+=n;buildPeriodOptions();updatePeriodLabel();render()}
-function periodTransactions(){const {start,end}=getPeriod();const s=iso(start),e=iso(end);return data.filter(x=>String(x.tanggal)>=s&&String(x.tanggal)<=e)}
-function openingBalance(){const {start}=getPeriod();const before=data.filter(x=>String(x.tanggal)<iso(start));return before.reduce((a,x)=>a+(x.jenis==='in'?Number(x.nominal||0):-Number(x.nominal||0)),0)}
+/* ---------- Draft upload HP/Android ---------- */
+function openDraftDB(){
+  return new Promise((resolve,reject)=>{
+    const r=indexedDB.open(DRAFT_DB,1);
+    r.onupgradeneeded=()=>{
+      if(!r.result.objectStoreNames.contains('draft')){
+        r.result.createObjectStore('draft');
+      }
+    };
+    r.onsuccess=()=>resolve(r.result);
+    r.onerror=()=>reject(r.error);
+  });
+}
 
-async function restoreDraft(){if(!admin)return;const d=await getDraft();if(d&&(d.file||d.name||d.deskripsi||d.nominal)){pendingUploadFile=d.file||null;if(!document.getElementById('fproof'))showForm(null,d)}}
-async function init(){const {data:{session}}=await db.auth.getSession();currentUser=session?.user||null;admin=!!currentUser;db.auth.onAuthStateChange((event,session)=>{currentUser=session?.user||null;admin=!!currentUser;if(event==='SIGNED_OUT'){editId=null;pendingUploadFile=null;document.getElementById('formArea').innerHTML='';render();return}if(event==='SIGNED_IN'){render();if(!document.getElementById('fproof'))showForm();setTimeout(restoreDraft,150)}});currentPeriodIndex=getCurrentPeriodIndex();await loadData();await restoreDraft()}
-window.addEventListener('pageshow',()=>setTimeout(restoreDraft,100));window.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(restoreDraft,150)});
+async function saveDraft(file){
+  try{
+    const f=file||pendingUploadFile||null;
+    const record={
+      tanggal:document.getElementById('fdate')?.value||'',
+      jenis:document.getElementById('ftype')?.value||'in',
+      nominal:document.getElementById('famount')?.value||'',
+      deskripsi:document.getElementById('fdesc')?.value||'',
+      name:f?.name||'',
+      type:f?.type||'',
+      size:f?.size||0,
+      fileData:f?await f.arrayBuffer():null
+    };
+    const dbx=await openDraftDB();
+    await new Promise((resolve,reject)=>{
+      const tx=dbx.transaction('draft','readwrite');
+      tx.objectStore('draft').put(record,'current');
+      tx.oncomplete=resolve;
+      tx.onerror=()=>reject(tx.error||new Error('Gagal menyimpan draft'));
+    });
+    return true;
+  }catch(e){
+    console.warn('Draft:',e);
+    return false;
+  }
+}
 
-function showLogin(){document.getElementById('modal').innerHTML=`<div class="modal"><div class="box"><h3>Login Admin</h3><p style="font-size:13px;color:#68736a">Masukkan email dan password Admin Supabase.</p><label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="Email admin"></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password admin"></label><div id="loginError" class="error"></div><div class="actions" style="margin-top:14px"><button type="button" onclick="doLogin()">Masuk</button><button type="button" class="alt" onclick="closeModal()">Batal</button></div></div></div>`;document.getElementById('modal').classList.remove('hidden');setTimeout(()=>document.getElementById('loginEmail')?.focus(),50)}
-function closeModal(){document.getElementById('modal').classList.add('hidden');document.getElementById('modal').innerHTML=''}
-async function doLogin(){const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value,err=document.getElementById('loginError');if(!email||!password){err.textContent='Email dan password wajib diisi.';return}err.textContent='Memproses login...';const {data:authData,error}=await db.auth.signInWithPassword({email,password});if(error){err.textContent='Login gagal: '+error.message;return}currentUser=authData.user;admin=true;closeModal();render();showForm()}
-async function logout(){await db.auth.signOut();admin=false;currentUser=null;editId=null;document.getElementById('formArea').innerHTML='';render()}
-function showForm(id=null,draft=null){if(!admin)return;editId=id;const x=id==null?{tanggal:draft?.tanggal||iso(new Date()),jenis:draft?.jenis||'in',deskripsi:draft?.deskripsi||'',nominal:draft?.nominal||'',bukti_url:'',bukti_nama:''}:data.find(a=>String(a.id)===String(id));if(!x)return;const draftName=draft?.name||pendingUploadFile?.name||'';document.getElementById('formArea').innerHTML=`<div class="form"><b>${id==null?'Tambah':'Edit'} Transaksi</b><div class="grid"><label>Tanggal<input id="fdate" type="date" value="${esc(x.tanggal)}" onchange="saveCurrentDraft()"></label><label>Jenis<select id="ftype" onchange="saveCurrentDraft()"><option value="in" ${x.jenis==='in'?'selected':''}>Uang Masuk</option><option value="out" ${x.jenis==='out'?'selected':''}>Uang Keluar</option></select></label><label>Nominal<input id="famount" type="number" min="1" step="1" value="${esc(x.nominal)}" oninput="saveCurrentDraft()"></label><label>Deskripsi<input id="fdesc" value="${esc(x.deskripsi)}" oninput="saveCurrentDraft()"></label><label class="full">Upload bukti transaksi (opsional)<div class="uploadbox"><input id="fproof" type="file" accept="image/*,.pdf,application/pdf" aria-label="Pilih bukti transaksi dari HP atau komputer" onchange="showSelectedFile(this)"><div id="fileSelected" class="filehint">${draftName?`File siap: ${esc(draftName)}`:'Belum ada file dipilih.'}</div><div class="filehint">Format: foto JPG, PNG, WEBP atau PDF. Maksimal 10 MB. Foto HP besar akan diperkecil otomatis.</div>${x.bukti_url?`<div class="prooffile">Bukti saat ini: <a href="${esc(x.bukti_url)}" target="_blank" rel="noopener">${esc(x.bukti_nama||'Lihat bukti')}</a></div>`:''}</div></label></div><div class="actions" style="margin-top:12px"><button type="button" onclick="submitForm()">Simpan</button><button type="button" class="alt" onclick="cancelForm()">Batal</button></div></div>`}
-function storagePathFromUrl(url){try{const marker=`/storage/v1/object/public/${STORAGE_BUCKET}/`;const i=String(url||'').indexOf(marker);return i>=0?String(url).slice(i+marker.length):''}catch(e){return ''}}
-function makeFileId(){if(window.crypto?.randomUUID)return window.crypto.randomUUID();return 'f'+Date.now().toString(36)+Math.random().toString(36).slice(2)}
-function fileMime(file){if(file.type)return file.type;const n=(file.name||'').toLowerCase();if(/\.(jpg|jpeg)$/.test(n))return'image/jpeg';if(n.endsWith('.png'))return'image/png';if(n.endsWith('.webp'))return'image/webp';if(n.endsWith('.pdf'))return'application/pdf';return'application/octet-stream'}
-async function showSelectedFile(input){input=input||document.getElementById('fproof');const out=document.getElementById('fileSelected'),f=input?.files?.[0]||null;pendingUploadFile=f;if(out)out.textContent=f?`File dipilih: ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`:'Belum ada file dipilih.';if(f){const ok=await saveDraft(f);if(out&&ok)out.textContent=`File tersimpan sementara: ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`}}
-function saveCurrentDraft(){saveDraft()}
-async function uploadProof(file){if(!file)return null;const mime=fileMime(file),originalName=(file.name||'bukti').replace(/[^a-zA-Z0-9._-]/g,'_'),isImage=mime.startsWith('image/')||/\.(jpg|jpeg|png|webp)$/i.test(originalName),isPdf=mime==='application/pdf'||/\.pdf$/i.test(originalName);if(!isImage&&!isPdf)throw new Error('Format bukti harus foto JPG/PNG/WEBP atau PDF.');if(file.size>10*1024*1024)throw new Error('Ukuran file maksimal 10 MB.');let uploadFile=file,uploadName=originalName,uploadType=mime;if(isImage&&file.size>2*1024*1024){try{const img=await new Promise((resolve,reject)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);resolve(im)};im.onerror=()=>{URL.revokeObjectURL(u);reject(new Error('Foto tidak dapat diproses.'))};im.src=u});const maxSide=1800,scale=Math.min(1,maxSide/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round((img.naturalWidth||img.width)*scale));canvas.height=Math.max(1,Math.round((img.naturalHeight||img.height)*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);const blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',.82));if(blob&&blob.size<file.size){uploadName=originalName.replace(/\.(png|webp|jpeg|jpg)$/i,'.jpg');uploadFile=new File([blob],uploadName,{type:'image/jpeg'});uploadType='image/jpeg'}}catch(e){console.warn('Kompresi foto dilewati:',e)}}if(!currentUser?.id)throw new Error('Sesi Admin tidak ditemukan. Silakan login kembali.');const path=`${currentUser.id}/${Date.now()}_${makeFileId()}_${uploadName}`;const {error}=await db.storage.from(STORAGE_BUCKET).upload(path,uploadFile,{upsert:false,contentType:uploadType});if(error)throw new Error('Upload ke Supabase Storage gagal: '+error.message);const {data}=db.storage.from(STORAGE_BUCKET).getPublicUrl(path);return{url:data.publicUrl,name:file.name,path}}
-async function deleteProof(path){if(!path)return;const {error}=await db.storage.from(STORAGE_BUCKET).remove([path]);if(error)console.warn('Bukti lama tidak terhapus:',error.message)}
-async function submitForm(){if(!admin){alert('Silakan login sebagai Admin.');return}const tanggal=document.getElementById('fdate').value,jenis=document.getElementById('ftype').value,nominal=Number(document.getElementById('famount').value),deskripsi=document.getElementById('fdesc').value.trim(),file=document.getElementById('fproof')?.files?.[0]||pendingUploadFile||null;if(!tanggal||!deskripsi||!nominal||nominal<=0){alert('Lengkapi tanggal, deskripsi, dan nominal.');return}try{let bukti_url=null,bukti_nama=null,bukti_path=null;const existing=editId==null?null:data.find(a=>String(a.id)===String(editId));if(existing){bukti_url=existing.bukti_url||null;bukti_nama=existing.bukti_nama||null}if(file){setStatus('Mengunggah bukti...');const uploaded=await uploadProof(file);bukti_url=uploaded.url;bukti_nama=uploaded.name;bukti_path=uploaded.path}const item={tanggal,jenis,deskripsi,nominal,bukti_url,bukti_nama};setStatus('Menyimpan transaksi...');const result=editId==null?await db.from('transaksi').insert(item).select().single():await db.from('transaksi').update(item).eq('id',editId).select().single();if(result.error){if(file&&bukti_path)await deleteProof(bukti_path);throw result.error}if(file&&existing){const oldPath=storagePathFromUrl(existing.bukti_url);if(oldPath&&oldPath!==bukti_path)await deleteProof(oldPath)}editId=null;pendingUploadFile=null;await clearDraft();document.getElementById('formArea').innerHTML='';await loadData()}catch(e){console.error(e);alert('Gagal menyimpan transaksi/bukti: '+e.message)}}
-async function cancelForm(){editId=null;pendingUploadFile=null;await clearDraft();document.getElementById('formArea').innerHTML=''}
-async function del(id){if(!admin)return;if(!confirm('Hapus transaksi ini?'))return;const x=data.find(a=>String(a.id)===String(id));const {error}=await db.from('transaksi').delete().eq('id',id);if(error){alert('Gagal menghapus: '+error.message);return}const path=storagePathFromUrl(x?.bukti_url);if(path)await deleteProof(path);await loadData()}
+async function getDraft(){
+  try{
+    const dbx=await openDraftDB();
+    const d=await new Promise((resolve,reject)=>{
+      const r=dbx.transaction('draft','readonly').objectStore('draft').get('current');
+      r.onsuccess=()=>resolve(r.result||null);
+      r.onerror=()=>reject(r.error);
+    });
+    if(d?.fileData){
+      const blob=new Blob([d.fileData],{type:d.type||'application/octet-stream'});
+      d.file=new File([blob],d.name||'bukti',{type:d.type||'application/octet-stream'});
+    }else{
+      d.file=null;
+    }
+    return d;
+  }catch(e){
+    return null;
+  }
+}
 
-function render(){const {start,end}=getPeriod(),ps=iso(start),pe=iso(end),allPeriod=periodTransactions(),opening=openingBalance(),q=(document.getElementById('search')?.value||'').toLowerCase();const filtered=allPeriod.filter(x=>(String(x.tanggal)+' '+String(x.deskripsi)).toLowerCase().includes(q)).sort((a,b)=>{const d=String(b.tanggal).localeCompare(String(a.tanggal));return d!==0?d:Number(b.id)-Number(a.id)});const masuk=allPeriod.filter(x=>x.jenis==='in').reduce((a,x)=>a+Number(x.nominal||0),0),keluar=allPeriod.filter(x=>x.jenis==='out').reduce((a,x)=>a+Number(x.nominal||0),0),saldo=opening+masuk-keluar;document.getElementById('saldoAwal').textContent=rupiah(opening);document.getElementById('masuk').textContent=rupiah(masuk);document.getElementById('keluar').textContent=rupiah(keluar);document.getElementById('saldo').textContent=rupiah(saldo);document.getElementById('aksiHead').style.display=admin?'table-cell':'none';updatePeriodLabel();document.getElementById('topActions').innerHTML=(admin?'<button type="button" onclick="showForm()">+ Tambah</button><button type="button" class="alt" onclick="logout()">Keluar Admin</button>':'<button type="button" id="adminBtn" aria-label="Login Admin"><svg class="admin-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3"/><rect x="4" y="10" width="16" height="11" rx="2"/><circle cx="12" cy="15" r="1.2"/><path d="M12 16.2V18"/></svg><span>Login Admin</span></button>')+'<button type="button" class="alt" onclick="printPDF()">Export PDF</button><button type="button" class="alt" onclick="exportCSV()">Export Excel</button>';let rows='';rows+=`<tr><td>${ps}</td><td><span class="badge bopen">SALDO AWAL</span></td><td>Sisa kas sampai ${formatDateID(new Date(start.getFullYear(),start.getMonth(),5))} / Saldo awal periode</td><td class="opening">${rupiah(opening)}</td><td>—</td>${admin?'<td>—</td>':''}</tr>`;rows+=filtered.map(x=>`<tr><td>${esc(x.tanggal)}</td><td><span class="badge ${x.jenis==='in'?'bin':'bout'}">${x.jenis==='in'?'MASUK':'KELUAR'}</span></td><td>${esc(x.deskripsi)}</td><td class="${x.jenis}">${rupiah(x.nominal)}</td><td>${x.bukti_url?`<a class="alt" style="display:inline-block;text-decoration:none;padding:7px 10px;border-radius:8px" href="${esc(x.bukti_url)}" target="_blank" rel="noopener">Lihat bukti</a>`:'—'}</td>${admin?`<td><div class="actions"><button type="button" class="alt" onclick="showForm(${x.id})">Edit</button><button type="button" class="red" onclick="del(${x.id})">Hapus</button></div></td>`:''}</tr>`).join('');document.getElementById('rows').innerHTML=rows;const btn=document.getElementById('adminBtn');if(btn)btn.onclick=showLogin;setStatus(`Periode ${formatDateID(start)} – ${formatDateID(end)} • ${allPeriod.length} transaksi`,true)}
-function exportCSV(){const {start,end}=getPeriod(),rows=[['Periode',`${formatDateID(start)} - ${formatDateID(end)}`],[],['Tanggal','Jenis','Deskripsi','Nominal','Bukti'],[iso(start),'Saldo Awal',`Sisa kas sampai ${formatDateID(new Date(start.getFullYear(),start.getMonth(),5))}`,openingBalance(),''],...periodTransactions().map(x=>[x.tanggal,x.jenis==='in'?'Uang Masuk':'Uang Keluar',x.deskripsi,x.nominal,x.bukti_url||''])];const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=`Laporan-Kas-${iso(start)}-sd-${iso(end)}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-function printPDF(){window.print()}
+async function clearDraft(){
+  try{
+    const dbx=await openDraftDB();
+    await new Promise((resolve,reject)=>{
+      const tx=dbx.transaction('draft','readwrite');
+      tx.objectStore('draft').delete('current');
+      tx.oncomplete=resolve;
+      tx.onerror=()=>reject(tx.error);
+    });
+  }catch(e){}
+}
+
+/* ---------- Data ---------- */
+async function loadData(){
+  setStatus('Memuat data online...');
+  const {data:rows,error}=await db.from('transaksi')
+    .select('*')
+    .order('tanggal',{ascending:false})
+    .order('id',{ascending:false});
+
+  if(error){
+    console.error(error);
+    setStatus('Gagal memuat data: '+error.message);
+    alert('Gagal memuat data online. Pastikan tabel transaksi dan policy Supabase sudah benar.');
+    return;
+  }
+
+  data=rows||[];
+  setStatus('Data online tersinkron',true);
+  buildPeriodOptions();
+  render();
+}
+
+function getPeriod(){
+  const start=periodStartByIndex(currentPeriodIndex);
+  return {start,end:periodEnd(start)};
+}
+
+function buildPeriodOptions(){
+  const sel=document.getElementById('periodSelect');
+  if(!sel)return;
+
+  const maxDate=data.reduce(
+    (m,x)=>x.tanggal&&x.tanggal>m?x.tanggal:m,''
+  );
+
+  const maxIndex=Math.max(
+    currentPeriodIndex,
+    maxDate?periodIndexForDate(maxDate):currentPeriodIndex
+  )+6;
+
+  const minIndex=Math.min(-2,currentPeriodIndex-2);
+  let html='';
+
+  for(let i=minIndex;i<=maxIndex;i++){
+    const s=periodStartByIndex(i);
+    const e=periodEnd(s);
+    html+=`<option value="${i}" ${i===currentPeriodIndex?'selected':''}>
+      ${formatDateID(s)} – ${formatDateID(e)}
+    </option>`;
+  }
+
+  sel.innerHTML=html;
+  updatePeriodLabel();
+}
+
+function updatePeriodLabel(){
+  const {start,end}=getPeriod();
+  document.getElementById('periodLabel').textContent=
+    `${formatDateID(start)} – ${formatDateID(end)}`;
+
+  const sel=document.getElementById('periodSelect');
+  if(sel)sel.value=String(currentPeriodIndex);
+}
+
+function changePeriod(v){
+  currentPeriodIndex=Number(v);
+  updatePeriodLabel();
+  render();
+}
+
+function shiftPeriod(n){
+  currentPeriodIndex+=n;
+  buildPeriodOptions();
+  updatePeriodLabel();
+  render();
+}
+
+function periodTransactions(){
+  const {start,end}=getPeriod();
+  const s=iso(start),e=iso(end);
+  return data.filter(x=>String(x.tanggal)>=s&&String(x.tanggal)<=e);
+}
+
+/*
+  Ini adalah saldo yang dibawa dari periode sebelumnya.
+  Penting: saldo ini TIDAK disimpan sebagai transaksi database.
+  Pada tampilan periode berjalan, saldo ini dibuat sebagai transaksi
+  virtual "MASUK" tepat pada tanggal 6.
+*/
+function carryInBalance(){
+  const {start}=getPeriod();
+  const before=data.filter(x=>String(x.tanggal)<iso(start));
+
+  return before.reduce(
+    (a,x)=>a+(x.jenis==='in'?Number(x.nominal||0):-Number(x.nominal||0)),0
+  );
+}
+
+/* ---------- Auth ---------- */
+async function init(){
+  const {data:{session}}=await db.auth.getSession();
+  currentUser=session?.user||null;
+  admin=!!currentUser;
+
+  db.auth.onAuthStateChange((event,session)=>{
+    currentUser=session?.user||null;
+    admin=!!currentUser;
+
+    if(event==='SIGNED_OUT'){
+      editId=null;
+      pendingUploadFile=null;
+      document.getElementById('formArea').innerHTML='';
+      render();
+      return;
+    }
+
+    if(event==='SIGNED_IN'){
+      render();
+      if(!document.getElementById('fproof'))showForm();
+      setTimeout(restoreDraft,150);
+    }
+  });
+
+  currentPeriodIndex=getCurrentPeriodIndex();
+  await loadData();
+  await restoreDraft();
+}
+
+async function restoreDraft(){
+  if(!admin)return;
+  const d=await getDraft();
+
+  if(d&&(d.file||d.name||d.deskripsi||d.nominal)){
+    pendingUploadFile=d.file||null;
+    if(!document.getElementById('fproof')){
+      showForm(null,d);
+    }
+  }
+}
+
+function showLogin(){
+  document.getElementById('modal').innerHTML=`
+    <div class="modal">
+      <div class="box">
+        <h3>Login Admin</h3>
+        <p style="font-size:13px;color:#68736a">
+          Masukkan email dan password Admin Supabase.
+        </p>
+
+        <label>Email
+          <input id="loginEmail" type="email" autocomplete="username"
+                 placeholder="Email admin">
+        </label>
+
+        <label>Password
+          <input id="loginPassword" type="password" autocomplete="current-password"
+                 placeholder="Password admin">
+        </label>
+
+        <div id="loginError" class="error"></div>
+
+        <div class="actions" style="margin-top:14px">
+          <button type="button" onclick="doLogin()">Masuk</button>
+          <button type="button" class="alt" onclick="closeModal()">Batal</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('modal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('loginEmail')?.focus(),50);
+}
+
+function closeModal(){
+  document.getElementById('modal').classList.add('hidden');
+  document.getElementById('modal').innerHTML='';
+}
+
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  const err=document.getElementById('loginError');
+
+  if(!email||!password){
+    err.textContent='Email dan password wajib diisi.';
+    return;
+  }
+
+  err.textContent='Memproses login...';
+
+  const {data:authData,error}=await db.auth.signInWithPassword({email,password});
+
+  if(error){
+    err.textContent='Login gagal: '+error.message;
+    return;
+  }
+
+  currentUser=authData.user;
+  admin=true;
+  closeModal();
+  render();
+  showForm();
+}
+
+async function logout(){
+  await db.auth.signOut();
+  admin=false;
+  currentUser=null;
+  editId=null;
+  document.getElementById('formArea').innerHTML='';
+  render();
+}
+
+/* ---------- Form ---------- */
+function showForm(id=null,draft=null){
+  if(!admin)return;
+
+  editId=id;
+
+  const x=id==null
+    ?{
+      tanggal:draft?.tanggal||iso(new Date()),
+      jenis:draft?.jenis||'in',
+      deskripsi:draft?.deskripsi||'',
+      nominal:draft?.nominal||'',
+      bukti_url:'',
+      bukti_nama:''
+    }
+    :data.find(a=>String(a.id)===String(id));
+
+  if(!x)return;
+
+  const draftName=draft?.name||pendingUploadFile?.name||'';
+
+  document.getElementById('formArea').innerHTML=`
+    <div class="form">
+      <b>${id==null?'Tambah':'Edit'} Transaksi</b>
+
+      <div class="grid">
+        <label>Tanggal
+          <input id="fdate" type="date" value="${esc(x.tanggal)}"
+                 onchange="saveCurrentDraft()">
+        </label>
+
+        <label>Jenis
+          <select id="ftype" onchange="saveCurrentDraft()">
+            <option value="in" ${x.jenis==='in'?'selected':''}>Uang Masuk</option>
+            <option value="out" ${x.jenis==='out'?'selected':''}>Uang Keluar</option>
+          </select>
+        </label>
+
+        <label>Nominal
+          <input id="famount" type="number" min="1" step="1"
+                 value="${esc(x.nominal)}" oninput="saveCurrentDraft()">
+        </label>
+
+        <label>Deskripsi
+          <input id="fdesc" value="${esc(x.deskripsi)}"
+                 oninput="saveCurrentDraft()">
+        </label>
+
+        <label class="full">Upload bukti transaksi (opsional)
+          <div class="uploadbox">
+            <input id="fproof" type="file"
+                   accept="image/*,.pdf,application/pdf"
+                   aria-label="Pilih bukti transaksi dari HP atau komputer"
+                   onchange="showSelectedFile(this)">
+
+            <div id="fileSelected" class="filehint">
+              ${draftName?`File siap: ${esc(draftName)}`:'Belum ada file dipilih.'}
+            </div>
+
+            <div class="filehint">
+              Format: JPG, PNG, WEBP atau PDF. Maksimal 10 MB.
+              Foto HP besar akan diperkecil otomatis.
+            </div>
+
+            ${x.bukti_url?
+              `<div class="prooffile">
+                Bukti saat ini:
+                <a href="${esc(x.bukti_url)}" target="_blank" rel="noopener">
+                  ${esc(x.bukti_nama||'Lihat bukti')}
+                </a>
+              </div>`:''}
+          </div>
+        </label>
+      </div>
+
+      <div class="actions" style="margin-top:12px">
+        <button type="button" onclick="submitForm()">Simpan</button>
+        <button type="button" class="alt" onclick="cancelForm()">Batal</button>
+      </div>
+    </div>`;
+}
+
+function storagePathFromUrl(url){
+  try{
+    const marker=`/storage/v1/object/public/${STORAGE_BUCKET}/`;
+    const i=String(url||'').indexOf(marker);
+    return i>=0?String(url).slice(i+marker.length):'';
+  }catch(e){
+    return '';
+  }
+}
+
+function makeFileId(){
+  if(window.crypto?.randomUUID)return window.crypto.randomUUID();
+  return 'f'+Date.now().toString(36)+Math.random().toString(36).slice(2);
+}
+
+function fileMime(file){
+  if(file.type)return file.type;
+  const n=(file.name||'').toLowerCase();
+  if(/\.(jpg|jpeg)$/.test(n))return'image/jpeg';
+  if(n.endsWith('.png'))return'image/png';
+  if(n.endsWith('.webp'))return'image/webp';
+  if(n.endsWith('.pdf'))return'application/pdf';
+  return'application/octet-stream';
+}
+
+async function showSelectedFile(input){
+  input=input||document.getElementById('fproof');
+  const out=document.getElementById('fileSelected');
+  const f=input?.files?.[0]||null;
+
+  pendingUploadFile=f;
+
+  if(out){
+    out.textContent=f
+      ?`File dipilih: ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`
+      :'Belum ada file dipilih.';
+  }
+
+  if(f){
+    const ok=await saveDraft(f);
+    if(out&&ok){
+      out.textContent=
+        `File tersimpan sementara: ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`;
+    }
+  }
+}
+
+function saveCurrentDraft(){
+  saveDraft();
+}
+
+/* ---------- Storage ---------- */
+async function uploadProof(file){
+  if(!file)return null;
+
+  const mime=fileMime(file);
+  const originalName=(file.name||'bukti')
+    .replace(/[^a-zA-Z0-9._-]/g,'_');
+
+  const isImage=mime.startsWith('image/')||
+    /\.(jpg|jpeg|png|webp)$/i.test(originalName);
+
+  const isPdf=mime==='application/pdf'||/\.pdf$/i.test(originalName);
+
+  if(!isImage&&!isPdf){
+    throw new Error('Format bukti harus foto JPG/PNG/WEBP atau PDF.');
+  }
+
+  if(file.size>10*1024*1024){
+    throw new Error('Ukuran file maksimal 10 MB.');
+  }
+
+  let uploadFile=file;
+  let uploadName=originalName;
+  let uploadType=mime;
+
+  if(isImage&&file.size>2*1024*1024){
+    try{
+      const img=await new Promise((resolve,reject)=>{
+        const u=URL.createObjectURL(file);
+        const im=new Image();
+
+        im.onload=()=>{
+          URL.revokeObjectURL(u);
+          resolve(im);
+        };
+
+        im.onerror=()=>{
+          URL.revokeObjectURL(u);
+          reject(new Error('Foto tidak dapat diproses.'));
+        };
+
+        im.src=u;
+      });
+
+      const maxSide=1800;
+      const scale=Math.min(
+        1,
+        maxSide/Math.max(
+          img.naturalWidth||img.width,
+          img.naturalHeight||img.height
+        )
+      );
+
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.max(1,
+        Math.round((img.naturalWidth||img.width)*scale));
+      canvas.height=Math.max(1,
+        Math.round((img.naturalHeight||img.height)*scale));
+
+      canvas.getContext('2d').drawImage(
+        img,0,0,canvas.width,canvas.height
+      );
+
+      const blob=await new Promise(r=>
+        canvas.toBlob(r,'image/jpeg',.82)
+      );
+
+      if(blob&&blob.size<file.size){
+        uploadName=originalName.replace(
+          /\.(png|webp|jpeg|jpg)$/i,'.jpg'
+        );
+        uploadFile=new File([blob],uploadName,{type:'image/jpeg'});
+        uploadType='image/jpeg';
+      }
+    }catch(e){
+      console.warn('Kompresi foto dilewati:',e);
+    }
+  }
+
+  if(!currentUser?.id){
+    throw new Error('Sesi Admin tidak ditemukan. Silakan login kembali.');
+  }
+
+  const path=
+    `${currentUser.id}/${Date.now()}_${makeFileId()}_${uploadName}`;
+
+  const {error}=await db.storage
+    .from(STORAGE_BUCKET)
+    .upload(path,uploadFile,{
+      upsert:false,
+      contentType:uploadType
+    });
+
+  if(error){
+    throw new Error(
+      'Upload ke Supabase Storage gagal: '+error.message
+    );
+  }
+
+  const {data}=db.storage
+    .from(STORAGE_BUCKET)
+    .getPublicUrl(path);
+
+  return{
+    url:data.publicUrl,
+    name:file.name,
+    path
+  };
+}
+
+async function deleteProof(path){
+  if(!path)return;
+  const {error}=await db.storage
+    .from(STORAGE_BUCKET)
+    .remove([path]);
+
+  if(error){
+    console.warn('Bukti lama tidak terhapus:',error.message);
+  }
+}
+
+/* ---------- Save transaction ---------- */
+async function submitForm(){
+  if(!admin){
+    alert('Silakan login sebagai Admin.');
+    return;
+  }
+
+  const tanggal=document.getElementById('fdate').value;
+  const jenis=document.getElementById('ftype').value;
+  const nominal=Number(document.getElementById('famount').value);
+  const deskripsi=document.getElementById('fdesc').value.trim();
+  const file=
+    document.getElementById('fproof')?.files?.[0]||
+    pendingUploadFile||
+    null;
+
+  if(!tanggal||!deskripsi||!nominal||nominal<=0){
+    alert('Lengkapi tanggal, deskripsi, dan nominal.');
+    return;
+  }
+
+  try{
+    let bukti_url=null;
+    let bukti_nama=null;
+    let bukti_path=null;
+
+    const existing=
+      editId==null?null:
+      data.find(a=>String(a.id)===String(editId));
+
+    if(existing){
+      bukti_url=existing.bukti_url||null;
+      bukti_nama=existing.bukti_nama||null;
+    }
+
+    if(file){
+      setStatus('Mengunggah bukti...');
+      const uploaded=await uploadProof(file);
+      bukti_url=uploaded.url;
+      bukti_nama=uploaded.name;
+      bukti_path=uploaded.path;
+    }
+
+    const item={
+      tanggal,
+      jenis,
+      deskripsi,
+      nominal,
+      bukti_url,
+      bukti_nama
+    };
+
+    setStatus('Menyimpan transaksi...');
+
+    const result=editId==null
+      ?await db.from('transaksi').insert(item).select().single()
+      :await db.from('transaksi')
+        .update(item)
+        .eq('id',editId)
+        .select()
+        .single();
+
+    if(result.error){
+      if(file&&bukti_path)await deleteProof(bukti_path);
+      throw result.error;
+    }
+
+    if(file&&existing){
+      const oldPath=storagePathFromUrl(existing.bukti_url);
+      if(oldPath&&oldPath!==bukti_path){
+        await deleteProof(oldPath);
+      }
+    }
+
+    editId=null;
+    pendingUploadFile=null;
+    await clearDraft();
+    document.getElementById('formArea').innerHTML='';
+    await loadData();
+
+  }catch(e){
+    console.error(e);
+    alert('Gagal menyimpan transaksi/bukti: '+e.message);
+  }
+}
+
+async function cancelForm(){
+  editId=null;
+  pendingUploadFile=null;
+  await clearDraft();
+  document.getElementById('formArea').innerHTML='';
+}
+
+async function del(id){
+  if(!admin)return;
+  if(!confirm('Hapus transaksi ini?'))return;
+
+  const x=data.find(a=>String(a.id)===String(id));
+
+  const {error}=await db.from('transaksi').delete().eq('id',id);
+
+  if(error){
+    alert('Gagal menghapus: '+error.message);
+    return;
+  }
+
+  const path=storagePathFromUrl(x?.bukti_url);
+  if(path)await deleteProof(path);
+
+  await loadData();
+}
+
+/* ---------- Render / periode ---------- */
+function render(){
+  const {start,end}=getPeriod();
+  const ps=iso(start);
+  const pe=iso(end);
+
+  const allPeriod=periodTransactions();
+  const carryIn=carryInBalance();
+
+  const q=(document.getElementById('search')?.value||'').toLowerCase();
+
+  const filtered=allPeriod
+    .filter(x=>
+      (String(x.tanggal)+' '+String(x.deskripsi))
+      .toLowerCase()
+      .includes(q)
+    )
+    .sort((a,b)=>{
+      const d=String(b.tanggal).localeCompare(String(a.tanggal));
+      return d!==0?d:Number(b.id)-Number(a.id);
+    });
+
+  const actualMasuk=allPeriod
+    .filter(x=>x.jenis==='in')
+    .reduce((a,x)=>a+Number(x.nominal||0),0);
+
+  const keluar=allPeriod
+    .filter(x=>x.jenis==='out')
+    .reduce((a,x)=>a+Number(x.nominal||0),0);
+
+  /*
+    Carry-in ditampilkan sebagai Uang Masuk pada tanggal 6.
+    Karena ini virtual, ia tidak ada di tabel database.
+  */
+  const totalMasuk=carryIn+actualMasuk;
+  const saldo=totalMasuk-keluar;
+
+  document.getElementById('saldoAwal').textContent=rupiah(carryIn);
+  document.getElementById('masuk').textContent=rupiah(totalMasuk);
+  document.getElementById('keluar').textContent=rupiah(keluar);
+  document.getElementById('saldo').textContent=rupiah(saldo);
+
+  document.getElementById('aksiHead').style.display=
+    admin?'table-cell':'none';
+
+  updatePeriodLabel();
+
+  document.getElementById('topActions').innerHTML=
+    (admin
+      ?`<button type="button" onclick="showForm()">+ Tambah</button>
+        <button type="button" class="alt" onclick="logout()">Keluar Admin</button>`
+      :`<button type="button" id="adminBtn" aria-label="Login Admin">
+          <svg class="admin-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 10V7a5 5 0 0 1 10 0v3"/>
+            <rect x="4" y="10" width="16" height="11" rx="2"/>
+            <circle cx="12" cy="15" r="1.2"/>
+            <path d="M12 16.2V18"/>
+          </svg>
+          <span>Login Admin</span>
+        </button>`
+    )+
+    `<button type="button" class="alt" onclick="printPDF()">Export PDF</button>
+     <button type="button" class="alt" onclick="exportCSV()">Export Excel</button>`;
+
+  let rows='';
+
+  /*
+    Baris carry-in otomatis.
+    Tanggalnya selalu tanggal 6 periode berjalan.
+  */
+  const carryDescription=currentPeriodIndex===0
+    ?`Saldo kas sampai 5 September 2026 / saldo awal periode`
+    :`Sisa kas periode sebelumnya sampai ${formatDateID(
+        new Date(start.getFullYear(),start.getMonth(),5)
+      )}`;
+
+  rows+=`
+    <tr>
+      <td>${ps}</td>
+      <td><span class="badge bin">MASUK</span></td>
+      <td>${esc(carryDescription)}</td>
+      <td class="in">${rupiah(carryIn)}</td>
+      <td>—</td>
+      ${admin?'<td>—</td>':''}
+    </tr>`;
+
+  rows+=filtered.map(x=>`
+    <tr>
+      <td>${esc(x.tanggal)}</td>
+      <td>
+        <span class="badge ${x.jenis==='in'?'bin':'bout'}">
+          ${x.jenis==='in'?'MASUK':'KELUAR'}
+        </span>
+      </td>
+      <td>${esc(x.deskripsi)}</td>
+      <td class="${x.jenis}">${rupiah(x.nominal)}</td>
+      <td>
+        ${x.bukti_url
+          ?`<a style="display:inline-block;text-decoration:none;
+                     background:#eef1ee;color:#182019;padding:7px 10px;
+                     border-radius:8px"
+               href="${esc(x.bukti_url)}"
+               target="_blank" rel="noopener">Lihat bukti</a>`
+          :'—'}
+      </td>
+      ${admin
+        ?`<td>
+            <div class="actions">
+              <button type="button" class="alt"
+                      onclick="showForm(${x.id})">Edit</button>
+              <button type="button" class="red"
+                      onclick="del(${x.id})">Hapus</button>
+            </div>
+          </td>`
+        :''}
+    </tr>`).join('');
+
+  if(!filtered.length){
+    rows+=`
+      <tr>
+        <td colspan="${admin?6:5}" class="empty">
+          Belum ada transaksi pada periode ini.
+        </td>
+      </tr>`;
+  }
+
+  document.getElementById('rows').innerHTML=rows;
+
+  const btn=document.getElementById('adminBtn');
+  if(btn)btn.onclick=showLogin;
+
+  setStatus(
+    `Periode ${formatDateID(start)} – ${formatDateID(end)} • ${allPeriod.length} transaksi`,
+    true
+  );
+}
+
+/* ---------- Export ---------- */
+function exportCSV(){
+  const {start,end}=getPeriod();
+  const carryIn=carryInBalance();
+
+  const rows=[
+    ['Periode',`${formatDateID(start)} - ${formatDateID(end)}`],
+    [],
+    ['Tanggal','Jenis','Deskripsi','Nominal','Bukti'],
+
+    [
+      iso(start),
+      'Uang Masuk',
+      currentPeriodIndex===0
+        ?'Saldo kas sampai 5 September 2026 / saldo awal periode'
+        :`Sisa kas periode sebelumnya sampai ${formatDateID(
+            new Date(start.getFullYear(),start.getMonth(),5)
+          )}`,
+      carryIn,
+      ''
+    ],
+
+    ...periodTransactions().map(x=>[
+      x.tanggal,
+      x.jenis==='in'?'Uang Masuk':'Uang Keluar',
+      x.deskripsi,
+      x.nominal,
+      x.bukti_url||''
+    ])
+  ];
+
+  const csv='\ufeff'+rows.map(r=>
+    r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')
+  ).join('\n');
+
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(
+    new Blob([csv],{type:'text/csv;charset=utf-8'})
+  );
+  a.download=`Laporan-Kas-${iso(start)}-sd-${iso(end)}.csv`;
+  a.click();
+
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+function printPDF(){
+  window.print();
+}
+
+/* ---------- Anti-loss upload draft ---------- */
+window.addEventListener('pageshow',()=>{
+  setTimeout(restoreDraft,150);
+});
+
+window.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    setTimeout(restoreDraft,150);
+  }
+});
+
 init();
 </script>
 </body>
