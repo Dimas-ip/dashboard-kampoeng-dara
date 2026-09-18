@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Keuangan Perum Kampoeng Dara — V3</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6f4;color:#182019}
+header{background:#182019;color:#fff;padding:28px 18px 70px}.wrap{max-width:1180px;margin:auto;padding:0 16px 40px}
+header h1{margin:8px 0;font-size:28px}header p{margin:0;color:#cbd3cc}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:-42px}
+.card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 4px 16px #0001}.card span{color:#68736a;font-size:13px}
+.card strong{display:block;font-size:23px;margin-top:8px}.in{color:#23753d}.out{color:#b43d32}.opening{color:#45634e}
+.balance{background:#28583b;color:#fff}.balance span{color:#d7e4da}
+.panel{background:#fff;margin-top:18px;padding:20px;border-radius:14px;box-shadow:0 4px 16px #0001}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.actions{display:flex;gap:7px;flex-wrap:wrap}
+button{border:0;border-radius:9px;padding:11px 15px;background:#28583b;color:#fff;font-weight:600;cursor:pointer}
+button.alt{background:#eef1ee;color:#182019}button.red{background:#b43d32}
+input,select{width:100%;padding:11px;border:1px solid #ccd3cd;border-radius:8px;margin-top:6px;background:#fff}
+label{font-size:13px;color:#4e594f}.periodbox{background:#eef3ee;border-radius:12px;padding:14px;margin-top:15px}
+.periodrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}.periodnav{display:flex;gap:7px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}.full{grid-column:1/-1}
+.form{background:#f6f8f6;padding:15px;border-radius:10px;margin:15px 0}.table{overflow:auto;margin-top:14px}
+table{width:100%;border-collapse:collapse;min-width:900px}th,td{text-align:left;padding:12px 9px;border-bottom:1px solid #e3e7e3;font-size:14px}
+th{font-size:11px;color:#69736b;text-transform:uppercase}.badge{padding:5px 8px;border-radius:99px;font-size:11px;font-weight:bold}
+.bin{background:#e0f1e4;color:#28623b}.bout{background:#f4dfdc;color:#a33b31}
+.note{margin-top:15px;padding:13px;background:#eef3ee;border-radius:10px;color:#5d675f;font-size:13px}
+.status{font-size:12px;margin-top:8px;color:#68736a}.filehint{font-size:12px;color:#68736a;margin-top:6px;word-break:break-word}
+.uploadbox{margin-top:6px;padding:12px;background:#fff;border:1px dashed #bfc9c0;border-radius:8px}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:15px}
+.mini{background:#f7f9f7;border:1px solid #e3e7e3;border-radius:10px;padding:12px}.mini b{display:block;font-size:16px;margin-top:5px}
+.empty{text-align:center;padding:25px;color:#7a837c}.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+.box{background:#fff;border-radius:14px;padding:22px;width:min(420px,100%);box-shadow:0 12px 40px #0003}.box h3{margin-top:0}
+.error{color:#b43d32;font-size:13px;margin-top:10px}.hidden{display:none!important}
+@media(max-width:900px){.cards,.summary{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.cards,.summary{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.full{grid-column:auto}.periodrow{grid-template-columns:1fr}.periodnav{width:100%}.periodnav button{flex:1}header h1{font-size:23px}}
+@media print{button,.form,.search,.note,.status,.periodnav{display:none!important}header{padding-bottom:25px}.cards{margin-top:15px}.panel{box-shadow:none}.periodbox{background:#fff;padding:0}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<small>LAPORAN KAS • ONLINE • V3</small>
+<h1>Dashboard Keuangan Perum Kampoeng Dara</h1>
+<p>Data otomatis disinkronkan saat kembali ke halaman atau tab dashboard.</p>
+</div></header>
+
+<div class="wrap">
+<section class="cards">
+<div class="card"><span>Saldo Awal Periode</span><strong class="opening" id="saldoAwal">Rp0</strong></div>
+<div class="card"><span>Uang Masuk</span><strong class="in" id="masuk">Rp0</strong></div>
+<div class="card"><span>Uang Keluar</span><strong class="out" id="keluar">Rp0</strong></div>
+<div class="card balance"><span>Sisa Kas</span><strong id="saldo">Rp0</strong></div>
+</section>
+
+<section class="panel">
+<div class="top">
+<div><small>BUKU KAS</small><h2 style="margin:6px 0">Transaksi</h2><div class="status" id="status">Menghubungkan ke database...</div></div>
+<div class="actions" id="topActions"></div>
+</div>
+
+<div class="periodbox"><small>PERIODE KEUANGAN</small>
+<div class="periodrow"><div><strong id="periodLabel"></strong><select id="periodSelect" onchange="changePeriod(this.value)"></select></div>
+<div class="periodnav"><button class="alt" onclick="shiftPeriod(-1)">← Sebelumnya</button><button class="alt" onclick="shiftPeriod(1)">Berikutnya →</button></div></div></div>
+
+<input class="search" id="search" placeholder="Cari transaksi pada periode ini..." oninput="render()">
+<div id="formArea"></div>
+
+<div class="summary">
+<div class="mini">Saldo awal<b id="sumOpening">Rp0</b></div>
+<div class="mini">Total masuk<b class="in" id="sumIn">Rp0</b></div>
+<div class="mini">Total keluar<b class="out" id="sumOut">Rp0</b></div>
+<div class="mini">Saldo akhir<b id="sumEnd">Rp0</b></div>
+</div>
+
+<div class="table"><table><thead><tr>
+<th>Tanggal</th><th>Jenis</th><th>Deskripsi</th><th>Nominal</th><th>Bukti</th><th id="aksiHead" style="display:none">Aksi</th>
+</tr></thead><tbody id="rows"></tbody></table></div>
+
+<div class="note">📌 <b>Periode:</b> tanggal 6 sampai tanggal 5. Deskripsi saldo awal mengikuti dashboard utama: <b>Saldo awal = sisa kas periode sebelumnya sampai tanggal 5</b>. 🔐 Viewer hanya melihat; Admin dapat menambah, mengedit, menghapus, dan mengunggah bukti.</div>
+</section>
+</div>
+<div id="modal" class="hidden"></div>
+
+<script>
+const SUPABASE_URL='https://econrjptzlqjhevtlhxg.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_fZMRhq7gc9fJ0CCbphB6eg_A6t1xqFl';
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const BUCKET='bukti-transaksi',ANCHOR='2026-08-06';
+let data=[],admin=false,currentUser=null,currentPeriodIndex=0,editId=null,pendingFile=null,ready=false,lastRefresh=0;
+
+const rupiah=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n)||0);
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const date=s=>{const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d)};
+const esc=s=>String(s??'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+const fmt=d=>d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+
+function pstart(i){const a=date(ANCHOR);return new Date(a.getFullYear(),a.getMonth()+i,6)}
+function pend(s){return new Date(s.getFullYear(),s.getMonth()+1,5)}
+function pindex(s){const d=date(s),a=date(ANCHOR);return (d.getFullYear()-a.getFullYear())*12+d.getMonth()-a.getMonth()-(d.getDate()<6?1:0)}
+function period(){const start=pstart(currentPeriodIndex);return{start,end:pend(start)}}
+function setStatus(t,ok=false){const e=document.getElementById('status');e.textContent=t;e.style.color=ok?'#23753d':'#68736a'}
+
+function carry(){
+ if(currentPeriodIndex===0)return 0;
+ const {start}=period(),s=iso(start);
+ return data.filter(x=>String(x.tanggal)>=ANCHOR&&String(x.tanggal)<s)
+ .reduce((a,x)=>a+(x.jenis==='in'?Number(x.nominal||0):-Number(x.nominal||0)),0);
+}
+function periodRows(){
+ const {start,end}=period(),s=iso(start),e=iso(end);
+ return data.filter(x=>String(x.tanggal)>=s&&String(x.tanggal)<=e);
+}
+function buildPeriods(){
+ const sel=document.getElementById('periodSelect');
+ const maxDate=data.reduce((m,x)=>x.tanggal&&x.tanggal>m?x.tanggal:m,'');
+ const max=Math.max(currentPeriodIndex,maxDate?pindex(maxDate):0)+6;
+ let h='';
+ for(let i=0;i<=max;i++){const s=pstart(i),e=pend(s);h+=`<option value="${i}" ${i===currentPeriodIndex?'selected':''}>${fmt(s)} – ${fmt(e)}</option>`}
+ sel.innerHTML=h;updateLabel();
+}
+function updateLabel(){
+ const {start,end}=period();
+ document.getElementById('periodLabel').textContent=`${fmt(start)} – ${fmt(end)}`;
+ document.getElementById('periodSelect').value=String(currentPeriodIndex);
+}
+function changePeriod(v){currentPeriodIndex=Number(v);editId=null;pendingFile=null;document.getElementById('formArea').innerHTML='';render()}
+function shiftPeriod(n){currentPeriodIndex=Math.max(0,currentPeriodIndex+n);buildPeriods();render()}
+
+async function loadData(silent=false){
+ if(!silent)setStatus('Memuat data online...');
+ const r=await db.from('transaksi').select('*').order('tanggal',{ascending:false}).order('id',{ascending:false});
+ if(r.error){console.error(r.error);setStatus('Gagal memuat data: '+r.error.message);return}
+ data=r.data||[];buildPeriods();render();lastRefresh=Date.now();
+ setStatus('Data online tersinkron • '+new Date().toLocaleTimeString('id-ID'),true);
+}
+async function refreshIfNeeded(){
+ if(!ready||document.visibilityState!=='visible')return;
+ if(Date.now()-lastRefresh<1500)return;
+ await loadData(true);
+}
+async function init(){
+ const s=await db.auth.getSession();
+ currentUser=s.data.session?.user||null;admin=!!currentUser;
+ db.auth.onAuthStateChange((e,s)=>{currentUser=s?.user||null;admin=!!currentUser;if(e==='SIGNED_OUT'){editId=null;document.getElementById('formArea').innerHTML=''}render()});
+ currentPeriodIndex=Math.max(0,pindex(iso(new Date())));
+ await loadData();ready=true;
+}
+
+window.addEventListener('pageshow',refreshIfNeeded);
+window.addEventListener('focus',refreshIfNeeded);
+window.addEventListener('popstate',()=>setTimeout(refreshIfNeeded,100));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(refreshIfNeeded,150)});
+
+function showLogin(){
+ document.getElementById('modal').innerHTML=`<div class="modal"><div class="box">
+ <h3>Login Admin</h3><p style="font-size:13px;color:#68736a">Gunakan email dan password Admin Supabase.</p>
+ <label>Email<input id="loginEmail" type="email" autocomplete="username"></label>
+ <label>Password<input id="loginPassword" type="password" autocomplete="current-password"></label>
+ <div id="loginError" class="error"></div>
+ <div class="actions" style="margin-top:14px"><button onclick="doLogin()">Masuk</button><button class="alt" onclick="closeModal()">Batal</button></div>
+ </div></div>`;
+ document.getElementById('modal').classList.remove('hidden');
+}
+function closeModal(){document.getElementById('modal').classList.add('hidden');document.getElementById('modal').innerHTML=''}
+async function doLogin(){
+ const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value,err=document.getElementById('loginError');
+ if(!email||!password){err.textContent='Email dan password wajib diisi.';return}
+ err.textContent='Memproses...';
+ const r=await db.auth.signInWithPassword({email,password});
+ if(r.error){err.textContent='Login gagal: '+r.error.message;return}
+ closeModal();await loadData();showForm();
+}
+async function logout(){await db.auth.signOut();admin=false;currentUser=null;editId=null;document.getElementById('formArea').innerHTML='';render()}
+
+function showForm(id=null){
+ if(!admin){showLogin();return}
+ editId=id;
+ const {start,end}=period();
+ const x=id==null?{tanggal:iso(start),jenis:'in',deskripsi:'',nominal:'',bukti_url:'',bukti_nama:''}:data.find(a=>String(a.id)===String(id));
+ if(!x)return;
+ document.getElementById('formArea').innerHTML=`<div class="form"><b>${id==null?'Tambah':'Edit'} Transaksi</b>
+ <div class="grid">
+ <label>Tanggal<input id="fdate" type="date" min="${iso(start)}" max="${iso(end)}" value="${esc(x.tanggal)}"></label>
+ <label>Jenis<select id="ftype"><option value="in" ${x.jenis==='in'?'selected':''}>Uang Masuk</option><option value="out" ${x.jenis==='out'?'selected':''}>Uang Keluar</option></select></label>
+ <label>Nominal<input id="famount" type="number" min="1" step="1" value="${esc(x.nominal)}"></label>
+ <label>Deskripsi<input id="fdesc" value="${esc(x.deskripsi)}"></label>
+ <label class="full">Bukti transaksi (opsional)<div class="uploadbox"><input id="fproof" type="file" accept="image/*,.pdf,application/pdf" onchange="selectFile(this)">
+ <div id="fileSelected" class="filehint">Belum ada file dipilih.</div>
+ ${x.bukti_url?`<div class="filehint">Bukti saat ini: <a href="${esc(x.bukti_url)}" target="_blank" rel="noopener">${esc(x.bukti_nama||'Lihat bukti')}</a></div>`:''}</div></label>
+ </div><div class="actions" style="margin-top:12px"><button onclick="save()">Simpan</button><button class="alt" onclick="cancelForm()">Batal</button></div></div>`;
+}
+function selectFile(i){
+ pendingFile=i?.files?.[0]||null;
+ const e=document.getElementById('fileSelected');
+ if(e)e.textContent=pendingFile?`File dipilih: ${pendingFile.name} (${(pendingFile.size/1024/1024).toFixed(2)} MB)`:'Belum ada file dipilih.';
+}
+function cancelForm(){editId=null;pendingFile=null;document.getElementById('formArea').innerHTML=''}
+
+async function save(){
+ if(!admin)return;
+ const tanggal=document.getElementById('fdate').value,jenis=document.getElementById('ftype').value;
+ const nominal=Number(document.getElementById('famount').value),deskripsi=document.getElementById('fdesc').value.trim();
+ if(!tanggal||!nominal||nominal<=0||!deskripsi){alert('Tanggal, nominal, dan deskripsi wajib diisi.');return}
+ let bukti_url=editId?data.find(x=>String(x.id)===String(editId))?.bukti_url||null:null;
+ let bukti_nama=editId?data.find(x=>String(x.id)===String(editId))?.bukti_nama||null:null;
+ if(pendingFile){
+  if(pendingFile.size>10*1024*1024){alert('Ukuran bukti maksimal 10 MB.');return}
+  const safe=pendingFile.name.replace(/[^a-zA-Z0-9._-]/g,'_'),path=`${Date.now()}_${safe}`;
+  const up=await db.storage.from(BUCKET).upload(path,pendingFile,{upsert:false});
+  if(up.error){alert('Upload bukti gagal: '+up.error.message);return}
+  const pub=db.storage.from(BUCKET).getPublicUrl(path);
+  bukti_url=pub.data.publicUrl;bukti_nama=pendingFile.name;
+ }
+ const payload={tanggal,jenis,nominal,deskripsi,bukti_url,bukti_nama};
+ let r=editId?await db.from('transaksi').update(payload).eq('id',editId):await db.from('transaksi').insert(payload);
+ if(r.error){alert('Gagal menyimpan: '+r.error.message);return}
+ cancelForm();await loadData();
+}
+async function del(id){
+ if(!admin)return;
+ if(!confirm('Hapus transaksi ini?'))return;
+ const r=await db.from('transaksi').delete().eq('id',id);
+ if(r.error){alert('Gagal menghapus: '+r.error.message);return}
+ await loadData();
+}
+
+function render(){
+ const rows=periodRows(),q=(document.getElementById('search')?.value||'').toLowerCase();
+ const filtered=rows.filter(x=>`${x.tanggal} ${x.jenis} ${x.deskripsi} ${x.nominal}`.toLowerCase().includes(q));
+ const opening=carry();
+ const tin=rows.filter(x=>x.jenis==='in').reduce((a,x)=>a+Number(x.nominal||0),0);
+ const tout=rows.filter(x=>x.jenis==='out').reduce((a,x)=>a+Number(x.nominal||0),0);
+ const end=opening+tin-tout;
+ document.getElementById('saldoAwal').textContent=rupiah(opening);document.getElementById('masuk').textContent=rupiah(tin);
+ document.getElementById('keluar').textContent=rupiah(tout);document.getElementById('saldo').textContent=rupiah(end);
+ document.getElementById('sumOpening').textContent=rupiah(opening);document.getElementById('sumIn').textContent=rupiah(tin);
+ document.getElementById('sumOut').textContent=rupiah(tout);document.getElementById('sumEnd').textContent=rupiah(end);
+ document.getElementById('aksiHead').style.display=admin?'table-cell':'none';
+ const start=period().start;
+ const openingDesc=`Saldo awal = sisa kas periode sebelumnya sampai 5 ${start.toLocaleDateString('id-ID',{month:'long',year:'numeric'})}`;
+ let rowsHtml=`<tr><td>${iso(start)}</td><td><span class="badge bin">SALDO AWAL</span></td><td>${esc(openingDesc)}</td><td class="in">${rupiah(opening)}</td><td>—</td>${admin?'<td>—</td>':''}</tr>`;
+ rowsHtml+=filtered.map(x=>`<tr><td>${esc(x.tanggal)}</td><td><span class="badge ${x.jenis==='in'?'bin':'bout'}">${x.jenis==='in'?'MASUK':'KELUAR'}</span></td><td>${esc(x.deskripsi)}</td><td class="${x.jenis==='in'?'in':'out'}">${rupiah(x.nominal)}</td><td>${x.bukti_url?`<a href="${esc(x.bukti_url)}" target="_blank" rel="noopener">Lihat bukti</a>`:'—'}</td>${admin?`<td><div class="actions"><button class="alt" onclick="showForm(${x.id})">Edit</button><button class="red" onclick="del(${x.id})">Hapus</button></div></td>`:''}</tr>`).join('');
+ if(!filtered.length)rowsHtml+=`<tr><td colspan="${admin?6:5}" class="empty">Belum ada transaksi pada periode ini.</td></tr>`;
+ document.getElementById('rows').innerHTML=rowsHtml;
+ document.getElementById('topActions').innerHTML=admin?
+ '<button onclick="showForm()">+ Tambah</button><button class="alt" onclick="logout()">Keluar Admin</button><button class="alt" onclick="exportExcel()">Export Excel</button><button class="alt" onclick="exportCSV()">Export CSV</button><button class="alt" onclick="window.print()">Export PDF</button>':
+ '<button onclick="showLogin()">Masuk Admin</button><button class="alt" onclick="exportExcel()">Export Excel</button><button class="alt" onclick="exportCSV()">Export CSV</button><button class="alt" onclick="window.print()">Export PDF</button>';
+ updateLabel();
+}
+function exportRows(){
+ const {start,end}=period(),opening=carry(),rows=periodRows();
+ return [{Tanggal:iso(start),Jenis:'SALDO AWAL',Deskripsi:`Saldo awal = sisa kas periode sebelumnya sampai 5 ${end.toLocaleDateString('id-ID',{month:'long',year:'numeric'})}`,Nominal:opening},
+ ...rows.map(x=>({Tanggal:x.tanggal,Jenis:x.jenis==='in'?'MASUK':'KELUAR',Deskripsi:x.deskripsi,Nominal:Number(x.nominal||0),Bukti:x.bukti_url||''}))];
+}
+function exportExcel(){
+ const ws=XLSX.utils.json_to_sheet(exportRows()),wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,ws,'Buku Kas');XLSX.writeFile(wb,'laporan-kas-kampoeng-dara.xlsx');
+}
+function exportCSV(){
+ const rows=exportRows(),keys=Object.keys(rows[0]);
+ const csv=[keys,...rows.map(r=>keys.map(k=>`"${String(r[k]??'').replaceAll('"','""')}"`))].map(r=>r.join(',')).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='laporan-kas-kampoeng-dara.csv';a.click();URL.revokeObjectURL(a.href);
+}
+init();
+</script>
+</body>
+</html>
