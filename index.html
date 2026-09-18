@@ -4,7 +4,619 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboard Keuangan Perum Kampoeng Dara</title>
+<script src="https://cdn.jsdeli<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Keuangan Perum Kampoeng Dara</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f4;color:#182019}
+header{background:#182019;color:#fff;padding:28px 18px 70px}
+header h1{margin:8px 0;font-size:28px}
+header p{margin:0;color:#cbd3cc}
+.wrap{max-width:1150px;margin:auto;padding:0 16px 40px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:-42px}
+.card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 4px 16px #0001}
+.card span{color:#68736a;font-size:13px}
+.card strong{display:block;font-size:23px;margin-top:8px}
+.in{color:#23753d}.out{color:#b43d32}.opening{color:#45634e}
+.balance{background:#28583b;color:#fff}.balance span{color:#d7e4da}
+.panel{background:#fff;margin-top:18px;padding:20px;border-radius:14px;box-shadow:0 4px 16px #0001}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.periodbox{background:#eef3ee;border-radius:12px;padding:14px;margin-top:15px}
+.periodrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.periodbox small{color:#59655c}.periodbox strong{display:block;margin-top:4px}
+.periodnav{display:flex;gap:7px}
+button{border:0;border-radius:9px;padding:11px 15px;background:#28583b;color:#fff;font-weight:600;cursor:pointer}
+button.alt{background:#eef1ee;color:#182019}
+button.red{background:#b43d32}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,select{width:100%;padding:11px;border:1px solid #ccd3cd;border-radius:8px;margin-top:6px;background:#fff}
+label{font-size:13px;color:#4e594f}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}
+.full{grid-column:1/-1}
+.form{background:#f6f8f6;padding:15px;border-radius:10px;margin:15px 0}
+.actions{display:flex;gap:7px;flex-wrap:wrap}
+.table{overflow:auto;margin-top:14px}
+table{width:100%;border-collapse:collapse;min-width:850px}
+th,td{text-align:left;padding:12px 9px;border-bottom:1px solid #e3e7e3;font-size:14px}
+th{font-size:11px;color:#69736b;text-transform:uppercase}
+.badge{padding:5px 8px;border-radius:99px;font-size:11px;font-weight:bold}
+.bin{background:#e0f1e4;color:#28623b}.bout{background:#f4dfdc;color:#a33b31}
+.empty{text-align:center;padding:25px;color:#7a837c}
+.note{margin-top:15px;padding:13px;background:#eef3ee;border-radius:10px;color:#5d675f;font-size:13px}
+.status{font-size:12px;margin-top:8px;color:#68736a}
+.filehint{font-size:12px;color:#68736a;margin-top:6px;word-break:break-word}
+.uploadbox{margin-top:6px;padding:12px;background:#fff;border:1px dashed #bfc9c0;border-radius:8px}
+.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+.box{background:#fff;border-radius:14px;padding:22px;width:min(420px,100%);box-shadow:0 12px 40px #0003}
+.box h3{margin-top:0}.error{color:#b43d32;font-size:13px;margin-top:10px}
+.hidden{display:none!important}
+@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){
+ .cards{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.full{grid-column:auto}
+ .periodrow{grid-template-columns:1fr}.periodnav{width:100%}.periodnav button{flex:1}
+ header h1{font-size:23px}
+}
+@media print{
+ button,.form,.search,.note,.status,.periodnav{display:none!important}
+ header{padding-bottom:25px}.cards{margin-top:15px}.panel{box-shadow:none}
+ .periodbox{background:#fff;padding:0}
+}
+</style>
+</head>
+<body>
+<header>
+ <div class="wrap">
+  <small>LAPORAN KAS • ONLINE</small>
+  <h1>Dashboard Keuangan Perum Kampoeng Dara</h1>
+  <p>Kelola uang masuk, uang keluar, sisa kas, dan bukti transaksi berdasarkan periode tanggal 6 sampai tanggal 5.</p>
+ </div>
+</header>
+
+<div class="wrap">
+<section class="cards">
+ <div class="card"><span>Saldo Awal Periode</span><strong class="opening" id="saldoAwal">Rp0</strong></div>
+ <div class="card"><span>Uang Masuk</span><strong class="in" id="masuk">Rp0</strong></div>
+ <div class="card"><span>Uang Keluar</span><strong class="out" id="keluar">Rp0</strong></div>
+ <div class="card balance"><span>Sisa Kas</span><strong id="saldo">Rp0</strong></div>
+</section>
+
+<section class="panel">
+ <div class="top">
+  <div>
+   <small>BUKU KAS</small>
+   <h2 style="margin:6px 0">Transaksi</h2>
+   <div class="status" id="status">Menghubungkan ke database...</div>
+  </div>
+  <div class="actions" id="topActions"></div>
+ </div>
+
+ <div class="periodbox">
+  <small>PERIODE KEUANGAN</small>
+  <div class="periodrow">
+   <div>
+    <strong id="periodLabel">6 Agustus 2026 – 5 September 2026</strong>
+    <select id="periodSelect" onchange="changePeriod(this.value)"></select>
+   </div>
+   <div class="periodnav">
+    <button type="button" class="alt" onclick="shiftPeriod(-1)">← Sebelumnya</button>
+    <button type="button" class="alt" onclick="shiftPeriod(1)">Berikutnya →</button>
+   </div>
+  </div>
+ </div>
+
+ <input class="search" id="search" placeholder="Cari transaksi pada periode ini..." oninput="render()">
+ <div id="formArea"></div>
+
+ <div class="table">
+  <table>
+   <thead><tr>
+    <th>Tanggal</th><th>Jenis</th><th>Deskripsi</th><th>Nominal</th><th>Bukti</th>
+    <th id="aksiHead" style="display:none">Aksi</th>
+   </tr></thead>
+   <tbody id="rows"></tbody>
+  </table>
+ </div>
+
+ <div class="note">
+  📌 <b>Aturan periode:</b> pembukuan dimulai <b>6 Agustus 2026</b> dan setiap periode berjalan dari tanggal
+  <b>6 sampai tanggal 5</b>. Sisa kas tanggal 5 menjadi saldo awal pada tanggal 6 periode berikutnya. Jika ada baris carry-over lama di database, baris tersebut otomatis diperlakukan sebagai <b>Saldo Awal</b> dan <b>tidak dihitung sebagai Uang Masuk</b>, sehingga saldo tidak dobel.
+  🔐 Viewer hanya dapat melihat; Admin dapat menambah, mengedit, menghapus transaksi, dan mengunggah bukti.
+ </div>
+</section>
+</div>
+
+<div id="modal" class="hidden"></div>
+
+<script>
+const SUPABASE_URL='https://econrjptzlqjhevtlhxg.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_fZMRhq7gc9fJ0CCbphB6eg_A6t1xqFl';
+const {createClient}=supabase;
+const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
+const STORAGE_BUCKET='bukti-transaksi';
+const PERIOD_ANCHOR='2026-08-06';
+
+let data=[];
+let admin=false;
+let currentUser=null;
+let editId=null;
+let pendingUploadFile=null;
+
+/* PENTING:
+   0 = 6 Agustus 2026 - 5 September 2026
+   1 = 6 September 2026 - 5 Oktober 2026
+   dst.
+*/
+let currentPeriodIndex=0;
+
+const rupiah=n=>new Intl.NumberFormat('id-ID',{
+ style:'currency',currency:'IDR',maximumFractionDigits:0
+}).format(Number(n)||0);
+
+const esc=s=>String(s??'')
+ .replaceAll('&','&amp;').replaceAll('"','&quot;')
+ .replaceAll('<','&lt;').replaceAll('>','&gt;');
+
+const pad=n=>String(n).padStart(2,'0');
+const toDate=s=>{
+ const [y,m,d]=String(s).split('-').map(Number);
+ return new Date(y,m-1,d);
+};
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+function periodStartByIndex(i){
+ const a=toDate(PERIOD_ANCHOR);
+ return new Date(a.getFullYear(),a.getMonth()+i,6);
+}
+function periodEnd(start){
+ return new Date(start.getFullYear(),start.getMonth()+1,5);
+}
+function formatDateID(d){
+ return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+}
+function setStatus(t,ok=false){
+ const e=document.getElementById('status');
+ e.textContent=t;e.style.color=ok?'#23753d':'#68736a';
+}
+function getPeriod(){
+ const start=periodStartByIndex(currentPeriodIndex);
+ return {start,end:periodEnd(start)};
+}
+function isCarryoverTransaction(x){
+ // Baris saldo yang pernah dimasukkan ke database pada tanggal 6
+ // dianggap sebagai SALDO AWAL, bukan UANG MASUK.
+ const d=String(x?.deskripsi||'').toLowerCase();
+ return x?.jenis==='in' && (
+   d.includes('sisa kas periode sebelumnya') ||
+   d.includes('sisa kas periode sebelum') ||
+   d.includes('saldo awal periode') ||
+   d.includes('saldo awal pembukuan')
+ );
+}
+
+function periodTransactions(){
+ const {start,end}=getPeriod(),s=iso(start),e=iso(end);
+ return data.filter(x=>String(x.tanggal)>=s&&String(x.tanggal)<=e&&!isCarryoverTransaction(x));
+}
+
+/* Saldo awal periode.
+   1) Jika database memiliki baris carry-over pada tanggal 6 periode,
+      nilai tersebut dipakai sebagai saldo awal.
+   2) Jika tidak ada, saldo dihitung dari seluruh transaksi nyata sejak
+      6 Agustus sampai sehari sebelum periode berjalan.
+   3) Periode pertama dimulai dari Rp0.
+*/
+function carryInBalance(){
+ const {start}=getPeriod();
+ const startIso=iso(start);
+ const carryRow=data.find(x=>String(x.tanggal)===startIso&&isCarryoverTransaction(x));
+ if(carryRow)return Number(carryRow.nominal||0);
+ if(currentPeriodIndex===0)return 0;
+ return data.filter(x=>{
+   const t=String(x.tanggal);
+   return t>=PERIOD_ANCHOR && t<startIso && !isCarryoverTransaction(x);
+ }).reduce((sum,x)=>sum+(x.jenis==='in'?Number(x.nominal||0):-Number(x.nominal||0)),0);
+}
+
+function buildPeriodOptions(){
+ const sel=document.getElementById('periodSelect');
+ if(!sel)return;
+
+ const maxDate=data.reduce((m,x)=>x.tanggal&&x.tanggal>m?x.tanggal:m,'');
+ const maxIndex=Math.max(
+   currentPeriodIndex,
+   maxDate?periodIndexForDate(maxDate):0
+ )+6;
+
+ let html='';
+ for(let i=0;i<=maxIndex;i++){
+   const s=periodStartByIndex(i),e=periodEnd(s);
+   html+=`<option value="${i}" ${i===currentPeriodIndex?'selected':''}>
+     ${formatDateID(s)} – ${formatDateID(e)}
+   </option>`;
+ }
+ sel.innerHTML=html;
+ updatePeriodLabel();
+}
+
+function periodIndexForDate(s){
+ const d=toDate(s),a=toDate(PERIOD_ANCHOR);
+ return (d.getFullYear()-a.getFullYear())*12+
+        (d.getMonth()-a.getMonth())-(d.getDate()<6?1:0);
+}
+
+function updatePeriodLabel(){
+ const {start,end}=getPeriod();
+ document.getElementById('periodLabel').textContent=
+   `${formatDateID(start)} – ${formatDateID(end)}`;
+ const sel=document.getElementById('periodSelect');
+ if(sel)sel.value=String(currentPeriodIndex);
+}
+
+function changePeriod(v){
+ currentPeriodIndex=Number(v);
+ updatePeriodLabel();
+ document.getElementById('formArea').innerHTML='';
+ editId=null;
+ pendingUploadFile=null;
+ render();
+}
+function shiftPeriod(n){
+ currentPeriodIndex=Math.max(0,currentPeriodIndex+n);
+ buildPeriodOptions();
+ render();
+}
+
+/* ---------- Data ---------- */
+async function loadData(){
+ setStatus('Memuat data online...');
+ const {data:rows,error}=await db.from('transaksi')
+   .select('*').order('tanggal',{ascending:false}).order('id',{ascending:false});
+
+ if(error){
+   console.error(error);
+   setStatus('Gagal memuat data: '+error.message);
+   alert('Gagal memuat data online: '+error.message);
+   return;
+ }
+ data=rows||[];
+ buildPeriodOptions();
+ render();
+ setStatus('Data online tersinkron',true);
+}
+
+/* ---------- Auth ---------- */
+async function init(){
+ const {data:{session}}=await db.auth.getSession();
+ currentUser=session?.user||null;
+ admin=!!currentUser;
+
+ db.auth.onAuthStateChange((event,session)=>{
+   currentUser=session?.user||null;
+   admin=!!currentUser;
+   if(event==='SIGNED_OUT'){
+     editId=null;
+     document.getElementById('formArea').innerHTML='';
+   }
+   render();
+ });
+
+ /* DEFAULT PERIODE OTOMATIS:
+    Saat dashboard pertama kali dibuka, tampilkan periode
+    6 sampai 5 yang sedang berjalan berdasarkan tanggal hari ini.
+    Contoh:
+    - 6 Sep 2026 s/d 5 Okt 2026 -> periode September
+    - 1-5 Okt 2026 -> tetap periode 6 Sep s/d 5 Okt
+    - 6 Okt 2026 -> berpindah ke periode 6 Okt s/d 5 Nov
+ */
+ const today=new Date();
+ currentPeriodIndex=Math.max(0,periodIndexForDate(iso(today)));
+ await loadData();
+}
+
+function showLogin(){
+ document.getElementById('modal').innerHTML=`
+ <div class="modal"><div class="box">
+  <h3>Login Admin</h3>
+  <p style="font-size:13px;color:#68736a">Masukkan email dan password Admin Supabase.</p>
+  <label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="Email admin"></label>
+  <label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password admin"></label>
+  <div id="loginError" class="error"></div>
+  <div class="actions" style="margin-top:14px">
+   <button type="button" onclick="doLogin()">Masuk</button>
+   <button type="button" class="alt" onclick="closeModal()">Batal</button>
+  </div>
+ </div></div>`;
+ document.getElementById('modal').classList.remove('hidden');
+}
+function closeModal(){
+ document.getElementById('modal').classList.add('hidden');
+ document.getElementById('modal').innerHTML='';
+}
+async function doLogin(){
+ const email=document.getElementById('loginEmail').value.trim();
+ const password=document.getElementById('loginPassword').value;
+ const err=document.getElementById('loginError');
+ if(!email||!password){err.textContent='Email dan password wajib diisi.';return;}
+ err.textContent='Memproses login...';
+ const {data:authData,error}=await db.auth.signInWithPassword({email,password});
+ if(error){err.textContent='Login gagal: '+error.message;return;}
+ currentUser=authData.user;admin=true;closeModal();render();showForm();
+}
+async function logout(){
+ await db.auth.signOut();
+ admin=false;currentUser=null;editId=null;
+ document.getElementById('formArea').innerHTML='';
+ render();
+}
+
+/* ---------- Form ---------- */
+function showForm(id=null){
+ if(!admin){alert('Silakan login sebagai Admin.');return;}
+ editId=id;
+
+ const {start,end}=getPeriod();
+ const x=id==null
+  ?{tanggal:iso(start),jenis:'in',deskripsi:'',nominal:'',bukti_url:'',bukti_nama:''}
+  :data.find(a=>String(a.id)===String(id));
+ if(!x)return;
+
+ document.getElementById('formArea').innerHTML=`
+ <div class="form">
+  <b>${id==null?'Tambah':'Edit'} Transaksi</b>
+  <div class="grid">
+   <label>Tanggal
+    <input id="fdate" type="date" value="${esc(x.tanggal)}"
+      min="${iso(start)}" max="${iso(end)}">
+   </label>
+   <label>Jenis
+    <select id="ftype">
+     <option value="in" ${x.jenis==='in'?'selected':''}>Uang Masuk</option>
+     <option value="out" ${x.jenis==='out'?'selected':''}>Uang Keluar</option>
+    </select>
+   </label>
+   <label>Nominal
+    <input id="famount" type="number" min="1" step="1" value="${esc(x.nominal)}">
+   </label>
+   <label>Deskripsi
+    <input id="fdesc" value="${esc(x.deskripsi)}">
+   </label>
+   <label class="full">Upload bukti transaksi (opsional)
+    <div class="uploadbox">
+     <input id="fproof" type="file" accept="image/*,.pdf,application/pdf" onchange="showSelectedFile(this)">
+     <div id="fileSelected" class="filehint">Belum ada file dipilih.</div>
+     <div class="filehint">Format JPG, PNG, WEBP atau PDF. Maksimal 10 MB.</div>
+     ${x.bukti_url?`<div class="filehint">Bukti saat ini:
+       <a href="${esc(x.bukti_url)}" target="_blank" rel="noopener">${esc(x.bukti_nama||'Lihat bukti')}</a>
+     </div>`:''}
+    </div>
+   </label>
+  </div>
+  <div class="actions" style="margin-top:12px">
+   <button type="button" onclick="submitForm()">Simpan</button>
+   <button type="button" class="alt" onclick="cancelForm()">Batal</button>
+  </div>
+ </div>`;
+}
+function cancelForm(){
+ editId=null;pendingUploadFile=null;
+ document.getElementById('formArea').innerHTML='';
+}
+function showSelectedFile(input){
+ pendingUploadFile=input?.files?.[0]||null;
+ const out=document.getElementById('fileSelected');
+ if(out)out.textContent=pendingUploadFile
+   ?`File dipilih: ${pendingUploadFile.name} (${(pendingUploadFile.size/1024/1024).toFixed(2)} MB)`
+   :'Belum ada file dipilih.';
+}
+
+/* ---------- Storage ---------- */
+function storagePathFromUrl(url){
+ try{
+  const marker=`/storage/v1/object/public/${STORAGE_BUCKET}/`;
+  const i=String(url||'').indexOf(marker);
+  return i>=0?String(url).slice(i+marker.length):'';
+ }catch(e){return '';}
+}
+function makeFileId(){
+ return window.crypto?.randomUUID
+   ?window.crypto.randomUUID()
+   :'f'+Date.now().toString(36)+Math.random().toString(36).slice(2);
+}
+async function uploadProof(file){
+ if(!file)return null;
+ if(file.size>10*1024*1024)throw new Error('Ukuran file maksimal 10 MB.');
+ const mime=file.type||'application/octet-stream';
+ const name=(file.name||'bukti').replace(/[^a-zA-Z0-9._-]/g,'_');
+ const path=`${currentUser.id}/${Date.now()}_${makeFileId()}_${name}`;
+
+ const {error}=await db.storage.from(STORAGE_BUCKET).upload(path,file,{
+   upsert:false,contentType:mime
+ });
+ if(error)throw new Error('Upload bukti gagal: '+error.message);
+
+ const {data}=db.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+ return {url:data.publicUrl,name:file.name,path};
+}
+async function deleteProof(path){
+ if(!path)return;
+ const {error}=await db.storage.from(STORAGE_BUCKET).remove([path]);
+ if(error)console.warn('Bukti lama tidak terhapus:',error.message);
+}
+
+/* ---------- Save/Delete ---------- */
+async function submitForm(){
+ if(!admin){alert('Silakan login sebagai Admin.');return;}
+
+ const {start,end}=getPeriod();
+ const tanggal=document.getElementById('fdate').value;
+ const jenis=document.getElementById('ftype').value;
+ const nominal=Number(document.getElementById('famount').value);
+ const deskripsi=document.getElementById('fdesc').value.trim();
+ const file=document.getElementById('fproof')?.files?.[0]||pendingUploadFile||null;
+
+ if(tanggal<iso(start)||tanggal>iso(end)){
+   alert(`Tanggal transaksi harus berada pada periode ${formatDateID(start)} – ${formatDateID(end)}.`);
+   return;
+ }
+ if(!tanggal||!deskripsi||!nominal||nominal<=0){
+   alert('Lengkapi tanggal, deskripsi, dan nominal.');
+   return;
+ }
+
+ try{
+   const existing=editId==null?null:data.find(a=>String(a.id)===String(editId));
+   let bukti_url=existing?.bukti_url||null;
+   let bukti_nama=existing?.bukti_nama||null;
+   let newPath=null;
+
+   if(file){
+     setStatus('Mengunggah bukti...');
+     const uploaded=await uploadProof(file);
+     bukti_url=uploaded.url;bukti_nama=uploaded.name;newPath=uploaded.path;
+   }
+
+   const item={tanggal,jenis,deskripsi,nominal,bukti_url,bukti_nama};
+   setStatus('Menyimpan transaksi...');
+
+   const result=editId==null
+    ?await db.from('transaksi').insert(item).select().single()
+    :await db.from('transaksi').update(item).eq('id',editId).select().single();
+
+   if(result.error){
+     if(newPath)await deleteProof(newPath);
+     throw result.error;
+   }
+
+   if(existing&&file){
+     const oldPath=storagePathFromUrl(existing.bukti_url);
+     if(oldPath&&oldPath!==newPath)await deleteProof(oldPath);
+   }
+
+   editId=null;pendingUploadFile=null;
+   document.getElementById('formArea').innerHTML='';
+   await loadData();
+ }catch(e){
+   console.error(e);
+   alert('Gagal menyimpan transaksi/bukti: '+e.message);
+   setStatus('Siap',true);
+ }
+}
+async function del(id){
+ if(!admin)return;
+ if(!confirm('Hapus transaksi ini?'))return;
+ const x=data.find(a=>String(a.id)===String(id));
+ const {error}=await db.from('transaksi').delete().eq('id',id);
+ if(error){alert('Gagal menghapus: '+error.message);return;}
+ const path=storagePathFromUrl(x?.bukti_url);
+ if(path)await deleteProof(path);
+ await loadData();
+}
+
+/* ---------- Render ---------- */
+function render(){
+ const {start,end}=getPeriod();
+ const allPeriod=periodTransactions();
+ const carryIn=carryInBalance();
+ const q=(document.getElementById('search')?.value||'').toLowerCase();
+
+ const filtered=allPeriod.filter(x=>
+   (String(x.tanggal)+' '+String(x.deskripsi)).toLowerCase().includes(q)
+ ).sort((a,b)=>{
+   const d=String(b.tanggal).localeCompare(String(a.tanggal));
+   return d!==0?d:Number(b.id)-Number(a.id);
+ });
+
+ const actualMasuk=allPeriod.filter(x=>x.jenis==='in'&&!isCarryoverTransaction(x))
+   .reduce((a,x)=>a+Number(x.nominal||0),0);
+ const keluar=allPeriod.filter(x=>x.jenis==='out')
+   .reduce((a,x)=>a+Number(x.nominal||0),0);
+
+ const saldo=carryIn+actualMasuk-keluar;
+
+ document.getElementById('saldoAwal').textContent=rupiah(carryIn);
+ document.getElementById('masuk').textContent=rupiah(actualMasuk);
+ document.getElementById('keluar').textContent=rupiah(keluar);
+ document.getElementById('saldo').textContent=rupiah(saldo);
+ document.getElementById('aksiHead').style.display=admin?'table-cell':'none';
+
+ updatePeriodLabel();
+
+ document.getElementById('topActions').innerHTML=`
+  ${admin
+    ?`<button type="button" onclick="showForm()">+ Tambah</button>
+       <button type="button" class="alt" onclick="logout()">Keluar Admin</button>`
+    :`<button type="button" onclick="showLogin()">🔒 Login Admin</button>`}
+  <button type="button" class="alt" onclick="printPDF()">Export PDF</button>
+  <button type="button" class="alt" onclick="exportCSV()">Export Excel</button>`;
+
+ let rows='';
+ const carryDescription=currentPeriodIndex===0
+   ?'Saldo awal pembukuan (sebelum periode 6 Agustus 2026)'
+   :`Sisa kas sampai 5 ${new Date(start.getFullYear(),start.getMonth(),5).toLocaleDateString('id-ID',{month:'long',year:'numeric'})} menjadi saldo awal periode ini`;
+
+ rows+=`<tr>
+  <td>${iso(start)}</td>
+  <td><span class="badge bin">SALDO AWAL</span></td>
+  <td>${esc(carryDescription)}</td>
+  <td class="in">${rupiah(carryIn)}</td>
+  <td>—</td>${admin?'<td>—</td>':''}
+ </tr>`;
+
+ rows+=filtered.map(x=>`<tr>
+  <td>${esc(x.tanggal)}</td>
+  <td><span class="badge ${x.jenis==='in'?'bin':'bout'}">${x.jenis==='in'?'MASUK':'KELUAR'}</span></td>
+  <td>${esc(x.deskripsi)}</td>
+  <td class="${x.jenis}">${rupiah(x.nominal)}</td>
+  <td>${x.bukti_url
+    ?`<a href="${esc(x.bukti_url)}" target="_blank" rel="noopener">Lihat bukti</a>`
+    :'—'}</td>
+  ${admin?`<td><div class="actions">
+    <button type="button" class="alt" onclick="showForm(${x.id})">Edit</button>
+    <button type="button" class="red" onclick="del(${x.id})">Hapus</button>
+  </div></td>`:''}
+ </tr>`).join('');
+
+ if(!filtered.length){
+  rows+=`<tr><td colspan="${admin?6:5}" class="empty">Belum ada transaksi pada periode ini.</td></tr>`;
+ }
+ document.getElementById('rows').innerHTML=rows;
+ setStatus(`Periode ${formatDateID(start)} – ${formatDateID(end)} • ${allPeriod.length} transaksi`,true);
+}
+
+/* ---------- Export ---------- */
+function exportCSV(){
+ const {start,end}=getPeriod(),carryIn=carryInBalance();
+ const rows=[
+  ['Periode',`${formatDateID(start)} - ${formatDateID(end)}`],[],
+  ['Tanggal','Jenis','Deskripsi','Nominal','Bukti'],
+  [iso(start),'Saldo Awal',
+   currentPeriodIndex===0?'Saldo awal pembukuan sampai 5 Agustus 2026':
+   `Saldo awal = sisa kas periode sebelumnya sampai ${formatDateID(new Date(start.getFullYear(),start.getMonth(),5))}`,
+   carryIn,''],
+  ...periodTransactions().map(x=>[
+   x.tanggal,x.jenis==='in'?'Uang Masuk':'Uang Keluar',x.deskripsi,x.nominal,x.bukti_url||''
+  ])
+ ];
+ const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+ a.download=`Laporan-Kas-${iso(start)}-sd-${iso(end)}.csv`;
+ a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function printPDF(){window.print();}
+
+init();
+</script>
+</body>
+</html>
+vr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f4f6f4;color:#182019}
