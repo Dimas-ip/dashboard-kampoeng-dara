@@ -515,11 +515,10 @@ function render(){
  const keluar=allPeriod.filter(x=>x.jenis==='out')
    .reduce((a,x)=>a+Number(x.nominal||0),0);
 
- const totalMasuk=carryIn+actualMasuk;
- const saldo=totalMasuk-keluar;
+ const saldo=carryIn+actualMasuk-keluar;
 
  document.getElementById('saldoAwal').textContent=rupiah(carryIn);
- document.getElementById('masuk').textContent=rupiah(totalMasuk);
+ document.getElementById('masuk').textContent=rupiah(actualMasuk);
  document.getElementById('keluar').textContent=rupiah(keluar);
  document.getElementById('saldo').textContent=rupiah(saldo);
  document.getElementById('aksiHead').style.display=admin?'table-cell':'none';
@@ -537,11 +536,11 @@ function render(){
  let rows='';
  const carryDescription=currentPeriodIndex===0
    ?'Saldo awal pembukuan sampai 5 Agustus 2026'
-   :`Sisa kas periode sebelumnya sampai ${formatDateID(new Date(start.getFullYear(),start.getMonth(),5))}`;
+   :`Saldo awal = sisa kas periode sebelumnya sampai ${formatDateID(new Date(start.getFullYear(),start.getMonth(),5))}`;
 
  rows+=`<tr>
   <td>${iso(start)}</td>
-  <td><span class="badge bin">MASUK</span></td>
+  <td><span class="badge bin">SALDO AWAL</span></td>
   <td>${esc(carryDescription)}</td>
   <td class="in">${rupiah(carryIn)}</td>
   <td>—</td>${admin?'<td>—</td>':''}
@@ -574,9 +573,9 @@ function exportCSV(){
  const rows=[
   ['Periode',`${formatDateID(start)} - ${formatDateID(end)}`],[],
   ['Tanggal','Jenis','Deskripsi','Nominal','Bukti'],
-  [iso(start),'Uang Masuk',
+  [iso(start),'Saldo Awal',
    currentPeriodIndex===0?'Saldo awal pembukuan sampai 5 Agustus 2026':
-   `Sisa kas periode sebelumnya sampai ${formatDateID(new Date(start.getFullYear(),start.getMonth(),5))}`,
+   `Saldo awal = sisa kas periode sebelumnya sampai ${formatDateID(new Date(start.getFullYear(),start.getMonth(),5))}`,
    carryIn,''],
   ...periodTransactions().map(x=>[
    x.tanggal,x.jenis==='in'?'Uang Masuk':'Uang Keluar',x.deskripsi,x.nominal,x.bukti_url||''
