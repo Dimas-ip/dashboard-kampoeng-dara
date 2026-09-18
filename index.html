@@ -118,7 +118,8 @@ th{font-size:11px;color:#69736b;text-transform:uppercase}
 
  <div class="note">
   📌 <b>Aturan periode:</b> pembukuan dimulai <b>6 Agustus 2026</b> dan setiap periode berjalan dari tanggal
-  <b>6 sampai tanggal 5</b>. Sisa kas tanggal 5 menjadi saldo awal pada tanggal 6 periode berikutnya. Jika ada baris carry-over lama di database, baris tersebut otomatis diperlakukan sebagai <b>Saldo Awal</b> dan <b>tidak dihitung sebagai Uang Masuk</b>, sehingga saldo tidak dobel.
+  <b>6 sampai tanggal 5</b>. Sisa kas tanggal 5 menjadi saldo awal/uang masuk virtual pada tanggal 6 periode berikutnya.
+  Baris saldo awal tersebut <b>tidak disimpan sebagai transaksi</b>, sehingga saldo tidak dobel.
   🔐 Viewer hanya dapat melihat; Admin dapat menambah, mengedit, menghapus transaksi, dan mengunggah bukti.
  </div>
 </section>
@@ -181,42 +182,38 @@ function getPeriod(){
  const start=periodStartByIndex(currentPeriodIndex);
  return {start,end:periodEnd(start)};
 }
-function isCarryoverTransaction(x){
- // Baris saldo yang pernah dimasukkan ke database pada tanggal 6
- // dianggap sebagai SALDO AWAL, bukan UANG MASUK.
- const d=String(x?.deskripsi||'').toLowerCase();
- return x?.jenis==='in' && (
-   d.includes('sisa kas periode sebelumnya') ||
-   d.includes('sisa kas periode sebelum') ||
-   d.includes('saldo awal periode') ||
-   d.includes('saldo awal pembukuan')
- );
-}
-
 function periodTransactions(){
  const {start,end}=getPeriod(),s=iso(start),e=iso(end);
- return data.filter(x=>String(x.tanggal)>=s&&String(x.tanggal)<=e&&!isCarryoverTransaction(x));
+ return data.filter(x=>String(x.tanggal)>=s&&String(x.tanggal)<=e);
 }
 
-/* Saldo awal periode.
-   1) Jika database memiliki baris carry-over pada tanggal 6 periode,
-      nilai tersebut dipakai sebagai saldo awal.
-   2) Jika tidak ada, saldo dihitung dari seluruh transaksi nyata sejak
-      6 Agustus sampai sehari sebelum periode berjalan.
-   3) Periode pertama dimulai dari Rp0.
+/* Saldo awal:
+   periode pertama = Rp0
+   periode berikutnya = saldo bersih seluruh transaksi sejak 6 Agustus
+   sampai tanggal 5 sebelum periode berjalan.
 */
 function carryInBalance(){
  const {start}=getPeriod();
  const startIso=iso(start);
- const carryRow=data.find(x=>String(x.tanggal)===startIso&&isCarryoverTransaction(x));
- if(carryRow)return Number(carryRow.nominal||0);
- if(currentPeriodIndex===0)return 0;
+
+ if(currentPeriodIndex===0){
+   const opening=data.find(x=>{
+     return String(x.tanggal)===PERIOD_ANCHOR && isCarryoverTransaction(x);
+   });
+   return opening ? Number(opening.nominal||0) : 0;
+ }
+
  return data.filter(x=>{
    const t=String(x.tanggal);
-   return t>=PERIOD_ANCHOR && t<startIso && !isCarryoverTransaction(x);
- }).reduce((sum,x)=>sum+(x.jenis==='in'?Number(x.nominal||0):-Number(x.nominal||0)),0);
+   return t>=PERIOD_ANCHOR &&
+          t<startIso &&
+          !isCarryoverTransaction(x);
+ }).reduce((saldo,x)=>{
+   const nominal=Number(x.nominal||0);
+   return x.jenis==='in' ? saldo+nominal :
+          x.jenis==='out' ? saldo-nominal : saldo;
+ },0);
 }
-
 function buildPeriodOptions(){
  const sel=document.getElementById('periodSelect');
  if(!sel)return;
@@ -300,14 +297,8 @@ async function init(){
    render();
  });
 
- /* DEFAULT PERIODE OTOMATIS:
-    Saat dashboard pertama kali dibuka, tampilkan periode
-    6 sampai 5 yang sedang berjalan berdasarkan tanggal hari ini.
-    Contoh:
-    - 6 Sep 2026 s/d 5 Okt 2026 -> periode September
-    - 1-5 Okt 2026 -> tetap periode 6 Sep s/d 5 Okt
-    - 6 Okt 2026 -> berpindah ke periode 6 Okt s/d 5 Nov
- */
+ /* DEFAULT PERIODE SENGAJA 0:
+    6 Agustus 2026 - 5 September 2026 */
  const today=new Date();
  currentPeriodIndex=Math.max(0,periodIndexForDate(iso(today)));
  await loadData();
@@ -526,15 +517,16 @@ function render(){
    return d!==0?d:Number(b.id)-Number(a.id);
  });
 
- const actualMasuk=allPeriod.filter(x=>x.jenis==='in'&&!isCarryoverTransaction(x))
+ const actualMasuk=allPeriod.filter(x=>x.jenis==='in')
    .reduce((a,x)=>a+Number(x.nominal||0),0);
  const keluar=allPeriod.filter(x=>x.jenis==='out')
    .reduce((a,x)=>a+Number(x.nominal||0),0);
 
- const saldo=carryIn+actualMasuk-keluar;
+ const totalMasuk=carryIn+actualMasuk;
+ const saldo=totalMasuk-keluar;
 
  document.getElementById('saldoAwal').textContent=rupiah(carryIn);
- document.getElementById('masuk').textContent=rupiah(actualMasuk);
+ document.getElementById('masuk').textContent=rupiah(totalMasuk);
  document.getElementById('keluar').textContent=rupiah(keluar);
  document.getElementById('saldo').textContent=rupiah(saldo);
  document.getElementById('aksiHead').style.display=admin?'table-cell':'none';
@@ -551,8 +543,8 @@ function render(){
 
  let rows='';
  const carryDescription=currentPeriodIndex===0
-   ?'Saldo awal pembukuan (sebelum periode 6 Agustus 2026)'
-   :`Sisa kas sampai 5 ${new Date(start.getFullYear(),start.getMonth(),5).toLocaleDateString('id-ID',{month:'long',year:'numeric'})} menjadi saldo awal periode ini`;
+   ?'Saldo awal pembukuan sampai 5 Agustus 2026'
+   :`Sisa kas periode sebelumnya sampai ${formatDateID(new Date(start.getFullYear(),start.getMonth(),5))}`;
 
  rows+=`<tr>
   <td>${iso(start)}</td>
@@ -589,9 +581,9 @@ function exportCSV(){
  const rows=[
   ['Periode',`${formatDateID(start)} - ${formatDateID(end)}`],[],
   ['Tanggal','Jenis','Deskripsi','Nominal','Bukti'],
-  [iso(start),'Saldo Awal',
+  [iso(start),'Uang Masuk',
    currentPeriodIndex===0?'Saldo awal pembukuan sampai 5 Agustus 2026':
-   `Saldo awal = sisa kas periode sebelumnya sampai ${formatDateID(new Date(start.getFullYear(),start.getMonth(),5))}`,
+   `Sisa kas periode sebelumnya sampai ${formatDateID(new Date(start.getFullYear(),start.getMonth(),5))}`,
    carryIn,''],
   ...periodTransactions().map(x=>[
    x.tanggal,x.jenis==='in'?'Uang Masuk':'Uang Keluar',x.deskripsi,x.nominal,x.bukti_url||''
